@@ -6,12 +6,38 @@
 
 	import { components } from '$lib/slices';
 	import MenuNav from '$lib/components/MenuNav.svelte';
+	import type { WebsiteMenuStockItem } from '$lib/menuStock';
 
 	let { data } = $props();
 	let stockPreview = $state(false);
+	let stockByKey = $state<Record<string, boolean>>({});
 
 	onMount(() => {
 		stockPreview = new URLSearchParams(window.location.search).get('stock-preview') === '1';
+		const controller = new AbortController();
+		const loadStock = async () => {
+			try {
+				const response = await fetch('/api/menu-stock', {
+					signal: controller.signal,
+					cache: 'no-store'
+				});
+				const payload = (await response.json()) as { ok?: boolean; items?: WebsiteMenuStockItem[] };
+				if (!response.ok || !payload.ok || !Array.isArray(payload.items)) return;
+				stockByKey = Object.fromEntries(payload.items.map((item) => [item.key, item.unavailable]));
+			} catch (error) {
+				if (!(error instanceof DOMException && error.name === 'AbortError')) {
+					console.error('[food-menu] stock refresh failed', error);
+				}
+			}
+		};
+		void loadStock();
+		const interval = window.setInterval(() => {
+			if (document.visibilityState === 'visible') void loadStock();
+		}, 30_000);
+		return () => {
+			controller.abort();
+			window.clearInterval(interval);
+		};
 	});
 
 	const menuSlices = data.page.data.slices.filter(
@@ -58,4 +84,4 @@
 	</div>
 {/if}
 
-<SliceZone slices={data.page.data.slices} {components} />
+<SliceZone slices={data.page.data.slices} {components} context={{ stockByKey }} />

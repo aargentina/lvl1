@@ -7,10 +7,11 @@
 	interface Props {
 		card: Content.ImageCardsSliceDefaultPrimaryCardsItem;
 		previewUnavailable?: boolean;
+		liveUnavailable?: boolean;
 	}
 
-	let { card, previewUnavailable = false }: Props = $props();
-	const unavailable = $derived(card.remove_items || previewUnavailable);
+	let { card, previewUnavailable = false, liveUnavailable = false }: Props = $props();
+	const unavailable = $derived(card.remove_items || previewUnavailable || liveUnavailable);
 </script>
 
 <li
