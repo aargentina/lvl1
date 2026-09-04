@@ -11,6 +11,7 @@
 	let { data } = $props();
 	let stockPreview = $state(false);
 	let stockByKey = $state<Record<string, boolean>>({});
+	let failedStockRefreshes = 0;
 
 	onMount(() => {
 		stockPreview = new URLSearchParams(window.location.search).get('stock-preview') === '1';
@@ -22,10 +23,17 @@
 					cache: 'no-store'
 				});
 				const payload = (await response.json()) as { ok?: boolean; items?: WebsiteMenuStockItem[] };
-				if (!response.ok || !payload.ok || !Array.isArray(payload.items)) return;
+				if (!response.ok || !payload.ok || !Array.isArray(payload.items)) {
+					failedStockRefreshes += 1;
+					if (failedStockRefreshes >= 5) stockByKey = {};
+					return;
+				}
+				failedStockRefreshes = 0;
 				stockByKey = Object.fromEntries(payload.items.map((item) => [item.key, item.unavailable]));
 			} catch (error) {
 				if (!(error instanceof DOMException && error.name === 'AbortError')) {
+					failedStockRefreshes += 1;
+					if (failedStockRefreshes >= 5) stockByKey = {};
 					console.error('[food-menu] stock refresh failed', error);
 				}
 			}
