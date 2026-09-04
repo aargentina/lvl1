@@ -5,6 +5,18 @@ export interface WebsiteMenuStockItem {
 	source: 'toast' | 'override' | 'default';
 }
 
+export const MAX_STOCK_AGE_MS = 45 * 60 * 1000;
+
+export function isFreshStockCheck(
+	value: unknown,
+	now = Date.now(),
+	maxAgeMs = MAX_STOCK_AGE_MS
+): value is string {
+	if (typeof value !== 'string') return false;
+	const checkedAt = Date.parse(value);
+	return Number.isFinite(checkedAt) && checkedAt <= now + 60_000 && now - checkedAt <= maxAgeMs;
+}
+
 export function websiteMenuKey(value: string): string {
 	return value
 		.normalize('NFKD')
