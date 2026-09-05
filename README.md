@@ -56,3 +56,18 @@ Preview and Production. The token stays on the server. The food page checks
 stock every 30 seconds while the page is visible. It removes all live
 unavailable labels after five failed checks. It also treats a stock snapshot
 older than 45 minutes as a failed check.
+
+## Menu type repair
+
+This branch covers the food and bar menu pages. The shared Prismic library uses
+the Svelte 5-compatible v2 API. Both rich-text wrappers use
+`ComponentProps<typeof PrismicRichText>` for that API.
+
+The menu repair passed 19 local server-rendering checks for menu text, prices,
+links, section order, and unavailable-item labels. Production compilation and
+prerender also passed with local sample menu data and external network access
+blocked. These checks did not test browser polling or production data.
+
+The full `npm run check` reports five errors outside this repair: one in
+`HeroSmall`, one in `Video`, two on the home page, and one in the slice simulator.
+There are no reported errors in the food or drink routes or their menu components.
