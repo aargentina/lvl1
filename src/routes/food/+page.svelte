@@ -6,28 +6,39 @@
 
 	import { components } from '$lib/slices';
 	import MenuNav from '$lib/components/MenuNav.svelte';
-	import type { WebsiteMenuStockItem } from '$lib/menuStock';
+	import { readMenuStock, CLIENT_STOCK_TIMEOUT_MS } from '$lib/menuStock';
 
 	let { data } = $props();
 	let stockPreview = $state(false);
 	let stockByKey = $state<Record<string, boolean>>({});
+	let failedStockRefreshes = 0;
 
 	onMount(() => {
 		stockPreview = new URLSearchParams(window.location.search).get('stock-preview') === '1';
 		const controller = new AbortController();
+		let inFlight = false;
+		let disposed = false;
 		const loadStock = async () => {
+			if (inFlight || disposed) return;
+			inFlight = true;
 			try {
-				const response = await fetch('/api/menu-stock', {
-					signal: controller.signal,
-					cache: 'no-store'
+				const payload = await readMenuStock(fetch, '/api/menu-stock', CLIENT_STOCK_TIMEOUT_MS, {
+					signal: controller.signal
 				});
-				const payload = (await response.json()) as { ok?: boolean; items?: WebsiteMenuStockItem[] };
-				if (!response.ok || !payload.ok || !Array.isArray(payload.items)) return;
-				stockByKey = Object.fromEntries(payload.items.map((item) => [item.key, item.unavailable]));
+				if (disposed) return;
+				const nextStock = Object.fromEntries(
+					payload.items.map((item) => [item.key, item.unavailable])
+				);
+				stockByKey = nextStock;
+				failedStockRefreshes = 0;
 			} catch (error) {
-				if (!(error instanceof DOMException && error.name === 'AbortError')) {
+				if (!disposed) {
+					failedStockRefreshes += 1;
+					if (failedStockRefreshes >= 5) stockByKey = {};
 					console.error('[food-menu] stock refresh failed', error);
 				}
+			} finally {
+				inFlight = false;
 			}
 		};
 		void loadStock();
@@ -35,6 +46,7 @@
 			if (document.visibilityState === 'visible') void loadStock();
 		}, 30_000);
 		return () => {
+			disposed = true;
 			controller.abort();
 			window.clearInterval(interval);
 		};

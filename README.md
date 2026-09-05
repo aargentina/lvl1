@@ -22,13 +22,14 @@ npm run dev
 
 ## Key Routes
 
-| Route | Description |
-|---|---|
-| `/` | Home (Prismic page) |
-| `/board_games` | Board game search and catalog |
-| `/api/send-email` | Contact form email endpoint |
-| `/api/preview` | Prismic preview handler |
-| `/slice-simulator` | Local Slice Machine simulator |
+| Route              | Description                                              |
+| ------------------ | -------------------------------------------------------- |
+| `/`                | Home (Prismic page)                                      |
+| `/board_games`     | Board game search and catalog                            |
+| `/api/send-email`  | Contact form email endpoint                              |
+| `/api/menu-stock`  | Server-only proxy for the protected dashboard stock feed |
+| `/api/preview`     | Prismic preview handler                                  |
+| `/slice-simulator` | Local Slice Machine simulator                            |
 
 ## Slices
 
@@ -38,12 +39,20 @@ Content slices managed via Prismic Slice Machine:
 
 ## Scripts
 
-| Command | Description |
-|---|---|
-| `npm run dev` | Start dev server + Slice Machine |
-| `npm run build` | Production build |
-| `npm run preview` | Preview production build |
-| `npm run check` | Type-check with svelte-check |
-| `npm run lint` | Lint and format check |
-| `npm run format` | Auto-format with Prettier |
-| `npm run slicemachine` | Start Slice Machine UI only |
+| Command                | Description                      |
+| ---------------------- | -------------------------------- |
+| `npm run dev`          | Start dev server + Slice Machine |
+| `npm run build`        | Production build                 |
+| `npm run preview`      | Preview production build         |
+| `npm run check`        | Type-check with svelte-check     |
+| `npm run lint`         | Lint and format check            |
+| `npm run format`       | Auto-format with Prettier        |
+| `npm run slicemachine` | Start Slice Machine UI only      |
+
+## Live menu stock
+
+Set `DASHBOARD_STOCK_API_URL` and `DASHBOARD_STOCK_API_TOKEN` in Vercel for
+Preview and Production. The token stays on the server. The food page checks
+stock every 30 seconds while the page is visible. It removes all live
+unavailable labels after five failed checks. It also treats a stock snapshot
+older than 45 minutes as a failed check.
