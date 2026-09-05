@@ -71,3 +71,11 @@ blocked. These checks did not test browser polling or production data.
 The full `npm run check` reports five errors outside this repair: one in
 `HeroSmall`, one in `Video`, two on the home page, and one in the slice simulator.
 There are no reported errors in the food or drink routes or their menu components.
+
+## Empty menu placeholders
+
+The menu hides removed cards titled `Currently Unavailable. Sorry!` only when
+they have no image, price, description, or notes. Named dishes and cards with
+content stay visible. Their existing stock labels still apply.
+
+Run the local rendering and stock regression tests with `npm run test:menu`.
