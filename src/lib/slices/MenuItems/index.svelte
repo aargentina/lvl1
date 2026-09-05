@@ -14,6 +14,19 @@
 
 	let { slice, context = {} }: Props = $props();
 	let stockPreview = $state(false);
+	const visibleCards = $derived(
+		slice.primary.cards.filter(
+			(card) =>
+				!(
+					card.remove_items === true &&
+					asText(card.title).trim() === 'Currently Unavailable. Sorry!' &&
+					!isFilled.image(card.image) &&
+					!isFilled.richText(card.price) &&
+					!isFilled.richText(card.text) &&
+					!isFilled.richText(card.notes)
+				)
+		)
+	);
 
 	onMount(() => {
 		stockPreview = new URLSearchParams(window.location.search).get('stock-preview') === '1';
@@ -36,7 +49,7 @@
 		</Heading>
 	{/if}
 	<ul class="grid gap-12 rounded-xl p-8 drop-shadow-2xl lg:grid-cols-2">
-		{#each slice.primary.cards as card, index}
+		{#each visibleCards as card, index}
 			{@const titleKey = websiteMenuKey(asText(card.title))}
 			<MenuItems
 				{card}
