@@ -9,14 +9,10 @@ interface Post {
 }
 
 let postsIndex: FlexSearch.Index;
-let categoryIndex: FlexSearch.Index;
-let bilingualIndex: FlexSearch.Index;
 let posts: Post[];
 
 export function createPostsIndex(data: Post[]) {
 	postsIndex = new FlexSearch.Index({ tokenize: 'forward' });
-	categoryIndex = new FlexSearch.Index({ tokenize: 'forward' });
-	bilingualIndex = new FlexSearch.Index({ tokenize: 'forward' });
 
 	data.forEach((post, i) => {
 		// For board games, only index Games, Bilingual, and Hidden - NOT Category or URL
@@ -24,8 +20,6 @@ export function createPostsIndex(data: Post[]) {
 		// and prevents URL text from being searchable
 		const item = `${post.Games} ${post.Bilingual} ${post.Hidden}`;
 		postsIndex.add(i, item);
-		categoryIndex.add(i, post.Category);
-		bilingualIndex.add(i, post.Bilingual);
 	});
 
 	posts = data;
@@ -36,9 +30,7 @@ export function searchPostsIndex(searchTerm: string, categories: string[] = []) 
 
 	// If we have a search term, search the posts index
 	if (searchTerm.trim()) {
-		// Escape special regex characters
-		const match = searchTerm.replace(/[.*+?^${}()|[]\]/g, '$&');
-		results = postsIndex.search(match);
+		results = postsIndex.search(searchTerm);
 	} else {
 		// If no search term, get all posts (all indices)
 		results = Array.from({ length: posts.length }, (_, i) => i);
