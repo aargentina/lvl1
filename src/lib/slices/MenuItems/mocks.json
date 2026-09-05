@@ -80,9 +80,9 @@
 									"__TYPE__": "StructuredTextContent",
 									"value": [
 										{
-											"type": "heading3",
+											"type": "paragraph",
 											"content": {
-												"text": "Something"
+												"text": "Aliqua nulla consectetur cillum."
 											}
 										}
 									]

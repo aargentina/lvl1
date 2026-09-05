@@ -143,6 +143,7 @@ type PageDocumentDataSlicesSlice =
 	| VideoGameSearchSlice
 	| GridSelectSlice
 	| SearchSlice
+	| AnnouncementsSlice
 	| HeroSlice
 	| TextSlice
 	| ImageSlice

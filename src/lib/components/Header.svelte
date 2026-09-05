@@ -24,7 +24,7 @@
 </svelte:head>
 
 <!-- Keeps `nav.fixed` so MenuNav can measure header height -->
-<nav class="fixed left-0 top-0 z-50 w-full py-1 bg-ink">
+<nav aria-label="Main" class="fixed left-0 top-0 z-50 w-full py-1 bg-ink">
 	<div class="relative flex h-16 items-center justify-between px-6 lg:px-10">
 		<button
 			class="absolute left-6 top-1/2 -translate-y-1/2 text-chalk lg:hidden"

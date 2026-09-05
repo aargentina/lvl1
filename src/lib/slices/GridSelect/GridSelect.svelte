@@ -17,7 +17,7 @@
 	class="relative rounded-xl py-11 transition-shadow duration-300 ease-in-out md:py-16 [@media(hover:hover)]:hover:shadow-lg [@media(hover:hover)]:hover:shadow-red/40"
 >
 	{#if isFilled.link(card.gridlink)}
-		<PrismicLink field={card.gridlink}>
+		<PrismicLink field={card.gridlink} aria-hidden="true" tabindex={-1}>
 			{#if isFilled.image(card.gridimage)}
 				<PrismicImage
 					field={card.gridimage}

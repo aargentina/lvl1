@@ -87,31 +87,35 @@
 			<ListBoxItem bind:group={valueMultiple} name="medium" value="Xbox360">Xbox360</ListBoxItem>
 		</ListBox>
 	</div>
-	<div class="h-96 overflow-y-auto rounded-t-xl border border-white/10 bg-ink/60 backdrop-blur-md">
+	<div
+		class="h-96 overflow-y-auto rounded-t-xl border border-white/10 bg-ink/60 backdrop-blur-md"
+		aria-live="polite"
+	>
 		{#if results}
 			<ul class="grid w-full list-none grid-flow-row lg:grid-cols-3">
 				{#each results as result}
-					<a
-						href={result.URL}
-						target="_blank"
-						rel="noopener noreferrer"
-						class="block text-lg text-chalk lg:text-2xl hover:bg-chalk/10 transition-colors"
-					>
-						<li class="p-2">
+					<li class="p-2">
+						<a
+							href={result.URL}
+							target="_blank"
+							rel="noopener noreferrer"
+							class="block text-lg text-chalk lg:text-2xl hover:bg-chalk/10 transition-colors"
+						>
 							<p class="text-pretty">{@html result.Games}</p>
 
 							<div class="flex flex-row flex-wrap gap-2">
 								<p class="text-sm text-red-bright">{@html result.Category}</p>
 								<p class="text-sm text-chalk/60">{@html result.Bilingual}</p>
 							</div>
-						</li>
-					</a>
+						</a>
+					</li>
 				{/each}
 			</ul>
 		{/if}
 	</div>
 
 	<div class="relative flex w-full gap-2 font-body text-2xl">
+		<label for="Search" class="sr-only">Search video games</label>
 		<input
 			value={searchTerm}
 			placeholder="Search..."

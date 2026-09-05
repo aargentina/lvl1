@@ -77,6 +77,7 @@
 
 <nav
 	bind:this={navEl}
+	aria-label="Menu sections"
 	class="fixed left-0 z-[9] w-full border-b border-white/10 bg-ink/95 backdrop-blur-sm"
 	style="top: {headerHeight}px"
 >

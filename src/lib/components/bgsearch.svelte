@@ -142,24 +142,27 @@
 		</div>
 
 		<!-- Search Results Section -->
-		<div class="h-96 w-full overflow-y-auto rounded-t-xl border border-white/10 bg-ink/60 backdrop-blur-md">
+		<div
+			class="h-96 w-full overflow-y-auto rounded-t-xl border border-white/10 bg-ink/60 backdrop-blur-md"
+			aria-live="polite"
+		>
 			{#if results && results.length > 0}
 				<ul class="grid w-full list-none grid-flow-row lg:grid-cols-3">
 					{#each results as result}
-						<a
-							href={result.URL}
-							target="_blank"
-							rel="noopener noreferrer"
-							class="block text-lg text-chalk lg:text-2xl hover:bg-chalk/10 transition-colors"
-						>
-							<li class="p-2">
+						<li class="p-2">
+							<a
+								href={result.URL}
+								target="_blank"
+								rel="noopener noreferrer"
+								class="block text-lg text-chalk lg:text-2xl hover:bg-chalk/10 transition-colors"
+							>
 								<p class="text-pretty">{@html result.Games}</p>
 								<div class="flex flex-row flex-wrap gap-2">
 									<p class="text-sm text-red-bright">{@html result.Category}</p>
 									<p class="text-sm text-chalk/60">{@html result.Bilingual}</p>
 								</div>
-							</li>
-						</a>
+							</a>
+						</li>
 					{/each}
 				</ul>
 			{:else if results && results.length === 0}
@@ -171,6 +174,7 @@
 
 		<!-- Search Input Section -->
 		<div class="relative flex w-full gap-2 pt-6 font-body text-2xl">
+			<label for="Search" class="sr-only">Search board games</label>
 			<input
 				bind:value={searchTerm}
 				placeholder="Search games..."
