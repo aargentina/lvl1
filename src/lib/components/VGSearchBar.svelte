@@ -40,19 +40,6 @@
 	});
 
 
-	// Import copy of CSV if the google link is down again
-	// onMount(async () => {
-    //     // Import the local CSV file
-    //     const csvModule = await import('$lib/assets/tables/vgdata.csv?raw');
-    //     const csvData = csvModule.default;
-        
-    //     // Parse the CSV data using xlsx utilities
-    //     const wb = read(csvData, { type: 'string' });
-    //     const posts = utils.sheet_to_json<Videogame>(wb.Sheets[wb.SheetNames[0]]);
-    //     allPosts = posts;
-    //     createPostsIndex(posts);
-    //     search = 'ready';
-    // });
 
 	$effect(() => {
 		if (search === 'ready') {
