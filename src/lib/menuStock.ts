@@ -2,6 +2,7 @@ export interface WebsiteMenuStockItem {
 	key: string;
 	name: string;
 	unavailable: boolean;
+	isNew?: boolean;
 	source: 'toast' | 'override' | 'default';
 }
 
@@ -36,6 +37,7 @@ export function isMenuStockPayload(value: unknown): value is WebsiteMenuStockPay
 			keys.has(item.key) ||
 			typeof item.name !== 'string' ||
 			typeof item.unavailable !== 'boolean' ||
+			(item.isNew !== undefined && typeof item.isNew !== 'boolean') ||
 			!['toast', 'override', 'default'].includes(item.source)
 		)
 			return false;

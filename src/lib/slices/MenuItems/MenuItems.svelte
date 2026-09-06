@@ -8,9 +8,17 @@
 		card: Content.ImageCardsSliceDefaultPrimaryCardsItem;
 		previewUnavailable?: boolean;
 		liveUnavailable?: boolean;
+		previewNew?: boolean;
+		liveNew?: boolean;
 	}
 
-	let { card, previewUnavailable = false, liveUnavailable = false }: Props = $props();
+	let {
+		card,
+		previewUnavailable = false,
+		liveUnavailable = false,
+		previewNew = false,
+		liveNew = false
+	}: Props = $props();
 	const unavailable = $derived(card.remove_items || previewUnavailable || liveUnavailable);
 </script>
 
@@ -26,6 +34,12 @@
 	<div class="grid h-full w-full grid-cols-2 text-pretty text-chalk">
 		<div class="justify-items-start font-heading">
 			<PrismicRichText field={card.title} />
+			{#if previewNew || liveNew}
+				<span
+					class="mr-2 mt-2 inline-flex rounded-full bg-ivory px-3 py-1 font-body text-xs font-black uppercase tracking-[0.12em] text-ink"
+					>NEW</span
+				>
+			{/if}
 			{#if unavailable}
 				<span
 					class="mt-2 inline-flex rounded-full bg-red-bright px-3 py-1 font-body text-xs font-black uppercase tracking-[0.12em] text-chalk"

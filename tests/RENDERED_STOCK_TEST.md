@@ -10,8 +10,8 @@ stock reader. It supplies synthetic menu data, manual poll timers, and local
 fetch replies. It does not load environment files or server routes. The server
 binds only to localhost and its content policy blocks network connections.
 
-Expected result: four failed polls retain the stock label; the fifth clears
-it. A valid response restores it and resets the failure count. The unrelated
+Expected result: four failed polls retain the stock and NEW labels; the fifth clears
+both. A valid response restores both and resets the failure count. The unrelated
 card and the editorially removed card must keep their own label states.
 
 Main verified this sequence in the browser on 2026-09-06. All eight existing

@@ -5,11 +5,11 @@
 
 	import MenuItems from './MenuItems.svelte';
 	import Heading from '$lib/components/Heading.svelte';
-	import { websiteMenuKey } from '$lib/menuStock';
+	import { websiteMenuKey, type WebsiteMenuStockItem } from '$lib/menuStock';
 
 	interface Props {
 		slice: Content.ImageCardsSlice;
-		context?: { stockByKey?: Record<string, boolean> };
+		context?: { stockByKey?: Record<string, WebsiteMenuStockItem | boolean> };
 	}
 
 	let { slice, context = {} }: Props = $props();
@@ -51,10 +51,13 @@
 	<ul class="grid gap-12 rounded-xl p-8 drop-shadow-2xl lg:grid-cols-2">
 		{#each visibleCards as card, index}
 			{@const titleKey = websiteMenuKey(asText(card.title))}
+			{@const stock = context.stockByKey?.[titleKey]}
 			<MenuItems
 				{card}
 				previewUnavailable={stockPreview && index === 0}
-				liveUnavailable={context.stockByKey?.[titleKey] ?? false}
+				liveUnavailable={typeof stock === 'boolean' ? stock : (stock?.unavailable ?? false)}
+				liveNew={typeof stock === 'object' && stock.isNew === true}
+				previewNew={stockPreview && index <= 1}
 			/>
 		{/each}
 	</ul>
