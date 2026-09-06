@@ -108,6 +108,8 @@ test('payload: validate all rows, fresh timestamp, unique keys and strict types'
 		null,
 		{},
 		{ ...good().items[0], unavailable: 'false' },
+		{ ...good().items[0], isNew: 'true' },
+		{ ...good().items[0], isNew: null },
 		{ ...good().items[0], key: '' },
 		{ ...good().items[0], name: 1 },
 		{ ...good().items[0], source: 'invalid' }
@@ -199,13 +201,13 @@ test('client: five ordinary failures clear old labels; valid result resets count
 		mode === 'good' ? response(good()) : new Response('', { status: 503 })
 	);
 	await flush();
-	assert.equal(client.state().stockByKey.fixture, true);
+	assert.equal(client.state().stockByKey.fixture.unavailable, true);
 	mode = 'bad';
 	for (let n = 0; n < 4; n++) {
 		client.poll();
 		await flush();
 	}
-	assert.equal(client.state().stockByKey.fixture, true);
+	assert.equal(client.state().stockByKey.fixture.unavailable, true);
 	mode = 'good';
 	client.poll();
 	await flush();
@@ -215,14 +217,14 @@ test('client: five ordinary failures clear old labels; valid result resets count
 		client.poll();
 		await flush();
 		assert.equal(client.state().failedStockRefreshes, n + 1);
-		if (n < 4) assert.equal(client.state().stockByKey.fixture, true);
+		if (n < 4) assert.equal(client.state().stockByKey.fixture.unavailable, true);
 	}
 	assert.deepEqual(client.state().stockByKey, {});
 	mode = 'good';
 	client.poll();
 	await flush();
 	assert.deepEqual(client.state(), {
-		stockByKey: { fixture: true },
+		stockByKey: { fixture: good().items[0] },
 		failedStockRefreshes: 0
 	});
 	client.close();
@@ -289,10 +291,10 @@ test('client: no overlap; timed-out response cannot replace a newer result', asy
 	assert.equal(requests.length, 2);
 	requests[1].resolve(response(good(false)));
 	await flush();
-	assert.equal(client.state().stockByKey.fixture, false);
+	assert.equal(client.state().stockByKey.fixture.unavailable, false);
 	requests[0].resolve(response(good(true)));
 	await flush();
-	assert.equal(client.state().stockByKey.fixture, false);
+	assert.equal(client.state().stockByKey.fixture.unavailable, false);
 	assert.equal(client.state().failedStockRefreshes, 0);
 	client.document.visibilityState = 'hidden';
 	client.poll();
@@ -312,4 +314,28 @@ test('client: page cleanup aborts requests and prevents late state changes', asy
 	pending.resolve(response(good()));
 	await flush();
 	assert.deepEqual(client.state(), { stockByKey: {}, failedStockRefreshes: 0 });
+});
+
+test('client: NEW follows feed changes and clears after five failed checks', async () => {
+	let payload = { ...good(false), items: [{ ...good(false).items[0], isNew: true }] };
+	const client = page(async () =>
+		payload ? response(payload) : new Response('', { status: 503 })
+	);
+	await flush();
+	assert.equal(client.state().stockByKey.fixture.isNew, true);
+	payload = { ...good(false), items: [{ ...good(false).items[0], isNew: false }] };
+	client.poll();
+	await flush();
+	assert.equal(client.state().stockByKey.fixture.isNew, false);
+	payload = { ...good(false), items: [{ ...good(false).items[0], isNew: true }] };
+	client.poll();
+	await flush();
+	payload = null;
+	for (let n = 1; n <= 5; n++) {
+		client.poll();
+		await flush();
+		if (n < 5) assert.equal(client.state().stockByKey.fixture.isNew, true);
+	}
+	assert.deepEqual(client.state().stockByKey, {});
+	client.close();
 });

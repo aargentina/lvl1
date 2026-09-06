@@ -6,11 +6,15 @@
 
 	import { components } from '$lib/slices';
 	import MenuNav from '$lib/components/MenuNav.svelte';
-	import { readMenuStock, CLIENT_STOCK_TIMEOUT_MS } from '$lib/menuStock';
+	import {
+		readMenuStock,
+		CLIENT_STOCK_TIMEOUT_MS,
+		type WebsiteMenuStockItem
+	} from '$lib/menuStock';
 
 	let { data } = $props();
 	let stockPreview = $state(false);
-	let stockByKey = $state<Record<string, boolean>>({});
+	let stockByKey = $state<Record<string, WebsiteMenuStockItem>>({});
 	let failedStockRefreshes = 0;
 
 	onMount(() => {
@@ -26,9 +30,7 @@
 					signal: controller.signal
 				});
 				if (disposed) return;
-				const nextStock = Object.fromEntries(
-					payload.items.map((item) => [item.key, item.unavailable])
-				);
+				const nextStock = Object.fromEntries(payload.items.map((item) => [item.key, item]));
 				stockByKey = nextStock;
 				failedStockRefreshes = 0;
 			} catch (error) {
@@ -91,8 +93,8 @@
 
 {#if stockPreview}
 	<div class="border-y-4 border-red bg-ivory px-4 py-3 text-center font-body text-sm text-ink">
-		<strong>Stock label preview:</strong> Sample items are marked as unavailable. This page uses demo
-		data only.
+		<strong>Menu label preview:</strong> Sample items show NEW and temporarily unavailable tags. These
+		tags use sample data.
 	</div>
 {/if}
 

@@ -79,3 +79,14 @@ they have no image, price, description, or notes. Named dishes and cards with
 content stay visible. Their existing stock labels still apply.
 
 Run the local rendering and stock regression tests with `npm run test:menu`.
+
+## New item labels
+
+The food page shows `NEW` when the same stock feed returns `isNew: true`.
+The dashboard sets this flag for items first recorded less than 90 days ago.
+Missing or false flags do not show the label. NEW and unavailable labels can
+show together. Both use the same refresh and failed-check rules.
+
+Open `/food?stock-preview=1` to see sample NEW labels on the first two visible
+items in each section. The first item also shows the unavailable label.
+The banner identifies these as sample data.

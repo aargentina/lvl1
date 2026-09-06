@@ -14,7 +14,7 @@ window.fetch = async (url, options) => {
   requests++;
   if (mode === 'bad') return new Response('', { status: 503 });
   return Response.json({ ok: true, stockCheckedAt: new Date().toISOString(), items: [
-    { key: 'fixture-soup', name: 'Fixture Soup', unavailable: true, source: 'toast' },
+    { key: 'fixture-soup', name: 'Fixture Soup', unavailable: true, isNew: true, source: 'toast' },
   ] });
 };
 const rich = text => [{ type: 'paragraph', text, spans: [] }];
@@ -26,13 +26,13 @@ mount(Food, { target: document.querySelector('#app'), props: { data: { page: { d
 const status = document.querySelector('#status'), results = document.querySelector('#results');
 const buttons = [...document.querySelectorAll('button')];
 async function settle() { await new Promise(resolve => setTimeout(resolve, 30)); await tick(); }
-function label(name) {
+function label(name, text = 'Temporarily unavailable') {
   const row = [...document.querySelectorAll('#app li')].find(item => item.textContent.includes(name));
   if (!row) throw new Error(`Rendered card missing: ${name}`);
-  return row.textContent.includes('Temporarily unavailable');
+  return row.textContent.includes(text);
 }
 function verify(expected, step) {
-  if (label('Fixture Soup') !== expected || label('Fixture Bread') || !label('Editorially Removed')) throw new Error(`FAIL: ${step}`);
+  if (label('Fixture Soup') !== expected || label('Fixture Soup', 'NEW') !== expected || label('Fixture Bread') || label('Fixture Bread', 'NEW') || !label('Editorially Removed') || label('Editorially Removed', 'NEW')) throw new Error(`FAIL: ${step}`);
   results.textContent += `PASS: ${step}\n`;
 }
 async function one(next) {

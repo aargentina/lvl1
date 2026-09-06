@@ -107,6 +107,17 @@ test('menu cards preserve content and hide only empty unavailable placeholders',
 			assert.match(renderCards([dish], { 'house-salad': true }), /Temporarily unavailable/);
 			assert.doesNotMatch(renderCards([dish], { 'house-salad': false }), /Temporarily unavailable/);
 		});
+		await t.test('NEW is independent of stock and absent for old or unknown items', () => {
+			const dish = card('House Salad', { remove_items: false });
+			for (const unavailable of [false, true]) {
+				const html = renderCards([dish], { 'house-salad': { unavailable, isNew: true } });
+				assert.match(html, />NEW<\/span>/);
+				assert.equal(html.includes('Temporarily unavailable'), unavailable);
+			}
+			for (const stock of [{ unavailable: false, isNew: false }, { unavailable: false }, false]) {
+				assert.doesNotMatch(renderCards([dish], { 'house-salad': stock }), />NEW<\/span>/);
+			}
+		});
 	} finally {
 		await server.close();
 	}
