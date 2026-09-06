@@ -22,13 +22,16 @@ npm run dev
 
 ## Key Routes
 
-| Route | Description |
-|---|---|
-| `/` | Home (Prismic page) |
-| `/board_games` | Board game search and catalog |
-| `/api/send-email` | Contact form email endpoint |
-| `/api/preview` | Prismic preview handler |
-| `/slice-simulator` | Local Slice Machine simulator |
+| Route              | Description                                              |
+| ------------------ | -------------------------------------------------------- |
+| `/`                | Home (Prismic page)                                      |
+| `/board_games`     | Board game search and catalog                            |
+| `/food-live`       | Unlisted trial food menu with live Toast labels          |
+| `/drink-live`      | Unlisted trial drink menu with live Toast labels         |
+| `/api/menu-stock`  | Server-only proxy for the protected dashboard stock feed |
+| `/api/send-email`  | Contact form email endpoint                              |
+| `/api/preview`     | Prismic preview handler                                  |
+| `/slice-simulator` | Local Slice Machine simulator                            |
 
 ## Slices
 
@@ -38,12 +41,24 @@ Content slices managed via Prismic Slice Machine:
 
 ## Scripts
 
-| Command | Description |
-|---|---|
-| `npm run dev` | Start dev server + Slice Machine |
-| `npm run build` | Production build |
-| `npm run preview` | Preview production build |
-| `npm run check` | Type-check with svelte-check |
-| `npm run lint` | Lint and format check |
-| `npm run format` | Auto-format with Prettier |
-| `npm run slicemachine` | Start Slice Machine UI only |
+| Command                  | Description                         |
+| ------------------------ | ----------------------------------- |
+| `npm run dev`            | Start dev server + Slice Machine    |
+| `npm run build`          | Production build                    |
+| `npm run preview`        | Preview production build            |
+| `npm run check`          | Type-check with svelte-check        |
+| `npm run test:food-live` | Test the trial menu and stock proxy |
+| `npm run lint`           | Lint and format check               |
+| `npm run format`         | Format files                        |
+| `npm run slicemachine`   | Start Slice Machine UI only         |
+
+## Trial food menu
+
+`/food` and `/drink` stay unchanged. `/food-live` and `/drink-live` read the same Prismic
+documents and add live Toast availability and NEW labels. The trial routes are not in the
+navigation or sitemap. They also use `noindex,nofollow` so search engines do not list them.
+
+Set `DASHBOARD_STOCK_API_URL` and `DASHBOARD_STOCK_API_TOKEN` in Vercel Preview and Production.
+The token stays on the server. The page checks stock every 30 seconds while it is visible. It
+removes live labels after five failed checks. It also rejects stock data older than 45 minutes.
+Add `?stock-preview=1` to either trial route to show sample labels during review.

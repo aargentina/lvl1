@@ -9,6 +9,7 @@
 		"preview": "vite preview",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
+		"test:food-live": "node --experimental-strip-types --test tests/menu-stock.test.mjs tests/food-live-menu.test.mjs",
 		"lint": "prettier --check . && eslint .",
 		"format": "prettier --write .",
 		"slicemachine": "start-slicemachine"
