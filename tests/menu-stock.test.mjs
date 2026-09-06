@@ -214,8 +214,17 @@ test('client: five ordinary failures clear old labels; valid result resets count
 	for (let n = 0; n < 5; n++) {
 		client.poll();
 		await flush();
+		assert.equal(client.state().failedStockRefreshes, n + 1);
+		if (n < 4) assert.equal(client.state().stockByKey.fixture, true);
 	}
 	assert.deepEqual(client.state().stockByKey, {});
+	mode = 'good';
+	client.poll();
+	await flush();
+	assert.deepEqual(client.state(), {
+		stockByKey: { fixture: true },
+		failedStockRefreshes: 0
+	});
 	client.close();
 });
 
