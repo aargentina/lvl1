@@ -62,3 +62,17 @@ Set `DASHBOARD_STOCK_API_URL` and `DASHBOARD_STOCK_API_TOKEN` in Vercel Preview 
 The token stays on the server. The page checks stock every 30 seconds while it is visible. It
 removes live labels after five failed checks. It also rejects stock data older than 45 minutes.
 Add `?stock-preview=1` to either trial route to show sample labels during review.
+
+The Prismic `remove_items` field is the switch labeled `86 item`. On the current menu, this switch
+hides the card. On a trial menu, a named card stays visible and shows `Temporarily unavailable`.
+This manual switch has priority because it remains active even when Toast reports the item as
+available. Empty menu placeholders stay hidden. A named item that is no longer sold, such as Drip
+Coffee, must be removed from Prismic or handled as a separate permanent-removal decision.
+
+For a real stock test, use the trial route without `?stock-preview=1`. The Vercel environment must
+have both stock settings, the dashboard stock feed must be current, and the Toast item must have a
+confirmed website mapping. The sample query does not call the stock feed.
+
+To stop the trial before merge, close this pull request or delete its branch. After merge, revert
+the pull request in GitHub. This removes the trial routes and stock proxy. The existing `/food` and
+`/drink` routes do not change during the trial.

@@ -12,13 +12,17 @@
 	}
 
 	let { slice, context = {} }: Props = $props();
+	const emptyPlaceholderTitles = new Set([
+		'Currently Unavailable. Sorry!',
+		'Nothing New at the Moment! Check Back Soon!'
+	]);
 
 	const visibleCards = $derived(
 		slice.primary.cards.filter(
 			(card) =>
 				!(
 					card.remove_items === true &&
-					asText(card.title).trim() === 'Currently Unavailable. Sorry!' &&
+					emptyPlaceholderTitles.has(asText(card.title).trim()) &&
 					!isFilled.image(card.image) &&
 					!isFilled.richText(card.price) &&
 					!isFilled.richText(card.text) &&

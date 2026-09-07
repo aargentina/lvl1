@@ -108,10 +108,18 @@ test('trial menu renders live labels without changing card content', async (t) =
 		await t.test('empty Prismic placeholder cards stay hidden', () => {
 			const html = renderCards([
 				card('Currently Unavailable. Sorry!', { remove_items: true }),
+				card('Nothing New at the Moment! Check Back Soon!', { remove_items: true }),
 				card('House Salad')
 			]);
 			assert.doesNotMatch(html, /Currently Unavailable\. Sorry!/);
+			assert.doesNotMatch(html, /Nothing New at the Moment!/);
 			assert.match(html, /House Salad/);
+		});
+
+		await t.test('named Prismic 86 items stay visible with a label', () => {
+			const html = renderCards([card('Drip Coffee', { remove_items: true })]);
+			assert.match(html, /Drip Coffee/);
+			assert.match(html, /Temporarily unavailable/);
 		});
 	} finally {
 		await server.close();
