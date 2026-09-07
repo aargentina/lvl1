@@ -50,11 +50,11 @@ test('trial menu renders live labels without changing card content', async (t) =
 		const { default: FoodLiveMenuSection } = await server.ssrLoadModule(
 			'/src/lib/slices/FoodLiveMenu/FoodLiveMenuSection.svelte'
 		);
-		const renderCards = (cards, stockByKey = {}) =>
+		const renderCards = (cards, stockByKey = {}, extraContext = {}) =>
 			render(SliceZone, {
 				props: {
 					components: { image_cards: FoodLiveMenuSection },
-					context: { stockByKey },
+					context: { stockByKey, ...extraContext },
 					slices: [
 						{
 							id: 'food',
@@ -117,9 +117,19 @@ test('trial menu renders live labels without changing card content', async (t) =
 		});
 
 		await t.test('named Prismic 86 items stay visible with a label', () => {
-			const html = renderCards([card('Drip Coffee', { remove_items: true })]);
-			assert.match(html, /Drip Coffee/);
+			const html = renderCards([card('Midnight Stout', { remove_items: true })]);
+			assert.match(html, /Midnight Stout/);
 			assert.match(html, /Temporarily unavailable/);
+		});
+
+		await t.test('a route can hide an explicitly retired card', () => {
+			const html = renderCards(
+				[card('Drip Coffee', { remove_items: true }), card('House Salad')],
+				{},
+				{ retiredCardKeys: ['drip-coffee'] }
+			);
+			assert.doesNotMatch(html, /Drip Coffee/);
+			assert.match(html, /House Salad/);
 		});
 	} finally {
 		await server.close();

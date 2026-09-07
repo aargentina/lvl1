@@ -17,6 +17,7 @@
 	let stockByKey = $state<Record<string, WebsiteMenuStockItem>>({});
 	let stockPreview = $state(false);
 	let failedStockRefreshes = 0;
+	const retiredCardKeys = ['drip-coffee'];
 	// Prismic still publishes a Svelte 4 component type. The site uses Svelte 5 components.
 	// Keep this compatibility cast local to the trial page.
 	/* eslint-disable @typescript-eslint/no-explicit-any */
@@ -118,5 +119,5 @@
 <SliceZone
 	slices={data.page.data.slices}
 	components={drinkLiveComponents}
-	context={{ stockByKey, stockPreview }}
+	context={{ stockByKey, stockPreview, retiredCardKeys }}
 />

@@ -8,7 +8,11 @@
 
 	interface Props {
 		slice: Content.ImageCardsSlice;
-		context?: { stockByKey?: Record<string, WebsiteMenuStockItem>; stockPreview?: boolean };
+		context?: {
+			stockByKey?: Record<string, WebsiteMenuStockItem>;
+			stockPreview?: boolean;
+			retiredCardKeys?: string[];
+		};
 	}
 
 	let { slice, context = {} }: Props = $props();
@@ -20,6 +24,7 @@
 	const visibleCards = $derived(
 		slice.primary.cards.filter(
 			(card) =>
+				!context.retiredCardKeys?.includes(websiteMenuKey(asText(card.title))) &&
 				!(
 					card.remove_items === true &&
 					emptyPlaceholderTitles.has(asText(card.title).trim()) &&

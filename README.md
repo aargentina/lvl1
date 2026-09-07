@@ -67,7 +67,10 @@ The Prismic `remove_items` field is the switch labeled `86 item`. On the current
 hides the card. On a trial menu, a named card stays visible and shows `Temporarily unavailable`.
 This manual switch has priority because it remains active even when Toast reports the item as
 available. Empty menu placeholders stay hidden. A named item that is no longer sold, such as Drip
-Coffee, must be removed from Prismic or handled as a separate permanent-removal decision.
+Coffee, can be excluded on its trial route. `/drink-live` excludes Drip Coffee because it is
+retired. If the item returns, remove `drip-coffee` from `retiredCardKeys` in
+`src/routes/drink-live/+page.svelte` after review. This exclusion does not change Prismic or the
+current `/drink` page.
 
 For a real stock test, use the trial route without `?stock-preview=1`. The Vercel environment must
 have both stock settings, the dashboard stock feed must be current, and the Toast item must have a
