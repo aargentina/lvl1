@@ -76,12 +76,44 @@ For a real stock test, use the trial route without `?stock-preview=1`. The Verce
 have both stock settings, the dashboard stock feed must be current, and the Toast item must have a
 confirmed website mapping. The sample query does not call the stock feed.
 
+Dashboard pull request #145 was merged as commit
+`d99913f15be162942aacd461a86ec9a2c5aede99`. Vercel production deployment
+`dpl_48q8YZW1DL1osgxhVnp8AEZR2qZF` reached READY on `level-one-dashboard.vercel.app` from that exact
+commit. Its production logs had no errors in the 15-minute check period.
+
+The dashboard release has a two-step activation safeguard for new automatic mappings. The first
+refresh gets fresh Toast stock evidence for each proposed identity. The second refresh activates
+the mappings only when every identity for the website card has fresh, valid evidence. New pairs
+start in review and activate together for each card. Existing active and manual mappings do not
+change while new evidence is pending. This process does not create a stock state from missing data.
+
+The controlled first refresh checked all 54 proposed drink identities. It found 52 available, 2
+unavailable, and 0 unknown. The second refresh activated a feed of 87 website cards: 86 use Toast
+mappings, with 32 food cards and 54 drink cards. Drip Coffee is the one default card. It remains
+hidden only on `/drink-live` because it is retired.
+
 On September 7, 2026, Garlic Breadsticks passed the full food test on the personal `/food-live`
 deployment. Changing the Toast stock value from blank to `0` made the proxy report the item as
-unavailable and the page showed `Temporarily unavailable` without a refresh command. Restoring the
-Toast value made the proxy and page available again. Toast applied both stock changes after Save;
-the full menu did not need publication. The drink feed still needs its separate activation and
-test before `/drink-live` is ready for a live trial.
+unavailable and the page showed `Temporarily unavailable` automatically. Restoring the Toast value
+made the proxy and page available again. Garlic Breadsticks remains restored and available.
+
+On the same date, Summer Slam passed the full drink test on `/drink-live`. Changing its Toast stock
+value from blank to `0` made the proxy report it as unavailable and showed the label automatically
+on desktop. The label also fit in a 390 by 844 browser viewport. The page content width was 380
+pixels, so there was no horizontal overflow. The browser console had no errors. Restoring the Toast
+value removed the label automatically on desktop and at the mobile browser size. Summer Slam
+remains restored and available. Toast applied the stock changes after Save; the full menu did not
+need publication.
+
+The tested personal preview uses website commit `ab037fe0abf7f140e0a6c183e04827d9cb00a065`:
+
+- Live food: https://lvl1-stock-preview-kfjqqces1-alessandro-argentina-s-projects.vercel.app/food-live
+- Live drinks: https://lvl1-stock-preview-kfjqqces1-alessandro-argentina-s-projects.vercel.app/drink-live
+- Sample food: https://lvl1-stock-preview-kfjqqces1-alessandro-argentina-s-projects.vercel.app/food-live?stock-preview=1
+- Sample drinks: https://lvl1-stock-preview-kfjqqces1-alessandro-argentina-s-projects.vercel.app/drink-live?stock-preview=1
+
+A later documentation-only commit can create a different Vercel preview URL. The links above identify
+the tested code commit. Vercel Deployment Protection can require a login.
 
 To stop the trial before merge, close this pull request or delete its branch. After merge, revert
 the pull request in GitHub. This removes the trial routes and stock proxy. The existing `/food` and
