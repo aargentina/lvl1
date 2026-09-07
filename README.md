@@ -87,7 +87,7 @@ the mappings only when every identity for the website card has fresh, valid evid
 start in review and activate together for each card. Existing active and manual mappings do not
 change while new evidence is pending. This process does not create a stock state from missing data.
 
-The controlled first refresh checked all 54 proposed drink identities. It found 52 available, 2
+The controlled first refresh checked all 54 proposed drink cards. It found 52 available, 2
 unavailable, and 0 unknown. The second refresh activated a feed of 87 website cards: 86 use Toast
 mappings, with 32 food cards and 54 drink cards. Drip Coffee is the one default card. It remains
 hidden only on `/drink-live` because it is retired.
