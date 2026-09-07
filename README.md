@@ -76,6 +76,13 @@ For a real stock test, use the trial route without `?stock-preview=1`. The Verce
 have both stock settings, the dashboard stock feed must be current, and the Toast item must have a
 confirmed website mapping. The sample query does not call the stock feed.
 
+On September 7, 2026, Garlic Breadsticks passed the full food test on the personal `/food-live`
+deployment. Changing the Toast stock value from blank to `0` made the proxy report the item as
+unavailable and the page showed `Temporarily unavailable` without a refresh command. Restoring the
+Toast value made the proxy and page available again. Toast applied both stock changes after Save;
+the full menu did not need publication. The drink feed still needs its separate activation and
+test before `/drink-live` is ready for a live trial.
+
 To stop the trial before merge, close this pull request or delete its branch. After merge, revert
 the pull request in GitHub. This removes the trial routes and stock proxy. The existing `/food` and
 `/drink` routes do not change during the trial.
