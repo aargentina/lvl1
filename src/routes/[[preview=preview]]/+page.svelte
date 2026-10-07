@@ -136,7 +136,7 @@
 					Whether it's local Ontario craft beers, handcrafted cocktails, or espresso-based drinks,
 					we have you covered from tap to table.
 				</p>
-				<a href="/food" class="mt-6 font-body font-black text-red-bright underline"
+				<a href="/drink" class="mt-6 font-body font-black text-red-bright underline"
 					>Explore Drinks →</a
 				>
 			</div>
@@ -225,7 +225,7 @@
 				That doesn't even include all of our cool video games and stuff.
 			</p>
 			<a
-				href="/board_games"
+				href="/board-games"
 				class="mt-6 inline-block font-body font-black text-red-bright underline"
 			>
 				Browse our Library →
