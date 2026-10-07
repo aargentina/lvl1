@@ -5,6 +5,7 @@
 
 	import { components } from '$lib/slices';
 	import MenuNav from '$lib/components/MenuNav.svelte';
+	import { NEW_DAYS } from '$lib/menuNew';
 
 	let { data } = $props();
 
@@ -42,4 +43,4 @@
 	<div class="pt-14"></div>
 {/if}
 
-<SliceZone slices={data.page.data.slices} {components} />
+<SliceZone slices={data.page.data.slices} {components} context={{ newDays: NEW_DAYS.drink }} />

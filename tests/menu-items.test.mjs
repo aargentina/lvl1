@@ -35,11 +35,11 @@ test('menu cards preserve content and hide only empty unavailable placeholders',
 		const { default: MenuItems } = await server.ssrLoadModule(
 			'/src/lib/slices/MenuItems/index.svelte'
 		);
-		const renderCards = (cards, stockByKey = {}) =>
+		const renderCards = (cards, stockByKey = {}, extraContext = {}) =>
 			render(SliceZone, {
 				props: {
 					components: { image_cards: MenuItems },
-					context: { stockByKey },
+					context: { stockByKey, ...extraContext },
 					slices: [
 						{
 							id: 'food',
@@ -117,6 +117,50 @@ test('menu cards preserve content and hide only empty unavailable placeholders',
 			for (const stock of [{ unavailable: false, isNew: false }, { unavailable: false }, false]) {
 				assert.doesNotMatch(renderCards([dish], { 'house-salad': stock }), />NEW<\/span>/);
 			}
+		});
+		await t.test('NEW from a Prismic date lasts 14 days for drinks and 60 for food', () => {
+			const now = new Date(2026, 9, 31, 12).getTime();
+			const daysAgo = (n) => {
+				const d = new Date(2026, 9, 31 - n);
+				const pad = (v) => String(v).padStart(2, '0');
+				return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+			};
+			const dish = (n) => card('House Salad', { remove_items: false, new_since: daysAgo(n) });
+			const shows = (n, newDays) =>
+				/>NEW<\/span>/.test(renderCards([dish(n)], {}, { newDays, now }));
+			assert.equal(shows(0, 14), true);
+			assert.equal(shows(13, 14), true);
+			assert.equal(shows(14, 14), false);
+			assert.equal(shows(59, 60), true);
+			assert.equal(shows(60, 60), false);
+			assert.equal(shows(-1, 14), false);
+			assert.equal(shows(0, undefined), false);
+		});
+		await t.test(
+			'a Prismic date overrides the stock feed; no date leaves the feed in charge',
+			() => {
+				const now = new Date(2026, 9, 31, 12).getTime();
+				const feedNew = { 'house-salad': { unavailable: false, isNew: true } };
+				const old = card('House Salad', { remove_items: false, new_since: '2026-01-01' });
+				assert.doesNotMatch(renderCards([old], feedNew, { newDays: 60, now }), />NEW<\/span>/);
+				const undated = card('House Salad', { remove_items: false });
+				assert.match(renderCards([undated], feedNew, { newDays: 60, now }), />NEW<\/span>/);
+			}
+		);
+		await t.test('best seller toggle shows a yellow tag, independent of NEW and stock', () => {
+			const star = card('House Salad', { remove_items: false, best_seller: true });
+			const html = renderCards([star]);
+			assert.match(html, />Best Seller<\/span>/);
+			assert.match(html, /bg-yellow-400[^>]*>Best Seller/);
+			assert.doesNotMatch(html, />NEW<\/span>/);
+			const both = renderCards([star], { 'house-salad': { unavailable: true, isNew: true } });
+			assert.match(both, />Best Seller<\/span>/);
+			assert.match(both, />NEW<\/span>/);
+			assert.match(both, /Temporarily unavailable/);
+			assert.doesNotMatch(
+				renderCards([card('House Salad', { remove_items: false, best_seller: false })]),
+				/Best Seller/
+			);
 		});
 	} finally {
 		await server.close();

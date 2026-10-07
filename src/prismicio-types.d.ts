@@ -971,6 +971,27 @@ export interface ImageCardsSliceDefaultPrimaryCardsItem {
 	 * - **Documentation**: https://prismic.io/docs/fields/boolean
 	 */
 	remove_items: prismic.BooleanField;
+
+	/**
+	 * New since (first day on menu) field in *MenuItems → Default → Primary → Cards*
+	 *
+	 * - **Field Type**: Date
+	 * - **Placeholder**: *None*
+	 * - **API ID Path**: image_cards.default.primary.cards[].new_since
+	 * - **Documentation**: https://prismic.io/docs/fields/date
+	 */
+	new_since: prismic.DateField;
+
+	/**
+	 * Best seller field in *MenuItems → Default → Primary → Cards*
+	 *
+	 * - **Field Type**: Boolean
+	 * - **Placeholder**: *None*
+	 * - **Default Value**: false
+	 * - **API ID Path**: image_cards.default.primary.cards[].best_seller
+	 * - **Documentation**: https://prismic.io/docs/fields/boolean
+	 */
+	best_seller: prismic.BooleanField;
 }
 
 /**

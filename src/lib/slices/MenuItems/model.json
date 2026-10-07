@@ -81,6 +81,21 @@
                   "placeholder_true": "86",
                   "default_value": false
                 }
+              },
+              "new_since": {
+                "type": "Date",
+                "config": {
+                  "label": "New since (first day on menu)"
+                }
+              },
+              "best_seller": {
+                "type": "Boolean",
+                "config": {
+                  "label": "Best seller",
+                  "placeholder_false": "regular",
+                  "placeholder_true": "best seller",
+                  "default_value": false
+                }
               }
             }
           }

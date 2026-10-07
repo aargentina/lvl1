@@ -40,6 +40,12 @@
 					>NEW</span
 				>
 			{/if}
+			{#if card.best_seller}
+				<span
+					class="mr-2 mt-2 inline-flex rounded-full bg-yellow-400 px-3 py-1 font-body text-xs font-black uppercase tracking-[0.12em] text-ink"
+					>Best Seller</span
+				>
+			{/if}
 			{#if unavailable}
 				<span
 					class="mt-2 inline-flex rounded-full bg-red-bright px-3 py-1 font-body text-xs font-black uppercase tracking-[0.12em] text-chalk"

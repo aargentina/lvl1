@@ -11,6 +11,7 @@
 		CLIENT_STOCK_TIMEOUT_MS,
 		type WebsiteMenuStockItem
 	} from '$lib/menuStock';
+	import { NEW_DAYS } from '$lib/menuNew';
 
 	let { data } = $props();
 	let stockPreview = $state(false);
@@ -98,4 +99,8 @@
 	</div>
 {/if}
 
-<SliceZone slices={data.page.data.slices} {components} context={{ stockByKey }} />
+<SliceZone
+	slices={data.page.data.slices}
+	{components}
+	context={{ stockByKey, newDays: NEW_DAYS.food }}
+/>

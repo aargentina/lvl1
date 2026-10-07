@@ -87,6 +87,24 @@ The dashboard sets this flag for items first recorded less than 90 days ago.
 Missing or false flags do not show the label. NEW and unavailable labels can
 show together. Both use the same refresh and failed-check rules.
 
+### NEW from a Prismic date
+
+Each menu card in Prismic has a **New since (first day on menu)** date. When it
+is set, it decides the `NEW` label and the stock feed is ignored for that card.
+The label shows on that date and stays for 60 days on the food page or 14 days
+on the drink page. Dates in the future show nothing yet. The limits are in
+`NEW_DAYS` in `src/lib/menuNew.ts`. The pages are prerendered, so the browser
+checks the date after the page loads. Cards without a date still follow the
+stock feed rule above.
+
+### Best sellers
+
+Each menu card has a **Best seller** toggle in Prismic. When it is on, the card
+shows a yellow `Best Seller` label. It is independent of NEW and stock labels.
+
+After you change the slice model, publish it from Slice Machine (`npm run
+slicemachine`, then Push) so Prismic has the two new fields.
+
 Open `/food?stock-preview=1` to see sample NEW labels on the first two visible
 items in each section. The first item also shows the unavailable label.
 The banner identifies these as sample data.
