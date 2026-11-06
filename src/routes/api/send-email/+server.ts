@@ -17,7 +17,11 @@ export async function POST({ request }) {
 
 		if (isReservation) {
 			// Large Group Reservation Form
-			subject = 'New Large Group Reservation Request';
+			// Unique subject per request so Gmail doesn't thread separate requests into one conversation
+			const date = new Date(`${formData.get('date')}T00:00:00Z`).toLocaleDateString('en-US', {
+				weekday: 'short', month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC'
+			});
+			subject = `Large Group Request: ${date} · ${formData.get('peopleCount')} people · ${formData.get('organizerName')}`;
 			html = `
 				<h1>New Large Group Reservation Request</h1>
 				<h2>Contact Information</h2>

@@ -34,7 +34,7 @@
 		).text();
 		const wb = read(f, { type: 'string' });
 		const posts = utils.sheet_to_json<Boardgame>(wb.Sheets[wb.SheetNames[0]]);
-		allPosts = posts;
+		allPosts = posts.filter((post) => !post.Hidden);
 		createPostsIndex(posts);
 		search = 'ready';
 	});
