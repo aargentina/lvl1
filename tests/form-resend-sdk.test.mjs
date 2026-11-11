@@ -15,6 +15,11 @@ registerHooks({
 				url: new URL('../src/lib/server/formEmail.ts', import.meta.url).href,
 				shortCircuit: true
 			};
+		if (specifier === '$lib/formOptions')
+			return {
+				url: new URL('../src/lib/formOptions.ts', import.meta.url).href,
+				shortCircuit: true
+			};
 		return nextResolve(specifier, context);
 	}
 });

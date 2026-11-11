@@ -1,6 +1,7 @@
 import { createHash, randomUUID } from 'node:crypto';
+import { EMAIL_MISMATCH_MESSAGE, GROUP_TIME_OPTIONS } from '$lib/formOptions';
 
-export const MAX_FORM_BYTES = 32_768;
+export const MAX_FORM_BYTES = 131_072;
 export const FORM_TEXT_LIMIT = 5_000;
 function hasControl(value: string, multiline: boolean) {
 	return Array.from(value).some((character) => {
@@ -11,12 +12,7 @@ function hasControl(value: string, multiline: boolean) {
 	});
 }
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-const timeOptions = new Set(
-	Array.from({ length: 18 }, (_, index) => {
-		const hour = 10 + Math.floor(index / 2);
-		return `${hour > 12 ? hour - 12 : hour}:${index % 2 ? '30' : '00'} ${hour >= 12 ? 'PM' : 'AM'}`;
-	})
-);
+const timeOptions = new Set<string>(GROUP_TIME_OPTIONS);
 
 export class FormInputError extends Error {
 	status: number;
@@ -139,7 +135,8 @@ export function prepareFormMail(form: FormData): { mail: FormMail; idempotencyKe
 				'The form contains an invalid field. Please reload it and try again.'
 			);
 	}
-	if (field(form, 'companyWebsite', 'leave blank', 200, true)) return null;
+	const honeypot = form.get('companyWebsite');
+	if (typeof honeypot === 'string' && honeypot.length > 0) return null;
 	const submissionId = form.has('submissionId')
 		? field(form, 'submissionId', 'submission', 36)
 		: randomUUID();
@@ -167,9 +164,9 @@ export function prepareFormMail(form: FormData): { mail: FormMail; idempotencyKe
 		if (!/^[+\d().\s#xext-]{7,50}$/i.test(phone) || phone.replace(/\D/g, '').length < 7)
 			throw new FormInputError('Enter a valid phone number.');
 		if (field(form, 'confirmEmail', 'confirm email address', 254) !== email)
-			throw new FormInputError('Email addresses do not match.');
+			throw new FormInputError(EMAIL_MISMATCH_MESSAGE);
 		const organization = field(form, 'organization', 'organization', 200, true);
-		const peopleCount = field(form, 'peopleCount', 'number of people', 4);
+		const peopleCount = field(form, 'peopleCount', 'number of people', 20);
 		if (!/^[1-9]\d{0,3}$/.test(peopleCount))
 			throw new FormInputError('Enter a whole number of people from 1 to 9999.');
 		const date = field(form, 'date', 'preferred date', 10);
@@ -228,6 +225,47 @@ export function prepareFormMail(form: FormData): { mail: FormMail; idempotencyKe
 	return { mail, idempotencyKey: `website-form/${submissionId}/${contentHash}` };
 }
 
+const providerErrorCodes = new Set([
+	'invalid_idempotency_key',
+	'validation_error',
+	'missing_api_key',
+	'restricted_api_key',
+	'invalid_api_key',
+	'not_found',
+	'method_not_allowed',
+	'invalid_idempotent_request',
+	'concurrent_idempotent_requests',
+	'invalid_attachment',
+	'invalid_from_address',
+	'invalid_access',
+	'invalid_parameter',
+	'invalid_region',
+	'missing_required_field',
+	'monthly_quota_exceeded',
+	'daily_quota_exceeded',
+	'rate_limit_exceeded',
+	'security_error',
+	'application_error',
+	'internal_server_error'
+]);
+
+function recordProviderFailure(error: unknown) {
+	const details =
+		error !== null && typeof error === 'object' ? (error as Record<string, unknown>) : {};
+	const code =
+		typeof details.name === 'string' && providerErrorCodes.has(details.name)
+			? details.name
+			: 'unknown';
+	const status = details.statusCode;
+	console.warn('website_form', {
+		event: 'provider_failed',
+		code,
+		...(typeof status === 'number' && Number.isInteger(status) && status >= 400 && status <= 599
+			? { status }
+			: {})
+	});
+}
+
 export async function handleFormEmail(
 	request: Request,
 	url: URL,
@@ -237,24 +275,47 @@ export async function handleFormEmail(
 	) => Promise<{ error: unknown; data?: { id: string } | null }>
 ): Promise<Response> {
 	const headers = { 'cache-control': 'no-store' };
+	const failedSend = () =>
+		Response.json(
+			{ success: false, error: 'We could not send your message. Please try again later.' },
+			{ status: 502, headers }
+		);
+	let prepared: ReturnType<typeof prepareFormMail>;
 	try {
 		checkFormOrigin(request, url);
-		const prepared = prepareFormMail(await readForm(request));
-		if (prepared) {
-			const result = await send(prepared.mail, { idempotencyKey: prepared.idempotencyKey });
-			if (result.error || !result.data?.id) throw new Error('Mail not accepted');
-		}
-		return Response.json({ success: true }, { headers });
+		prepared = prepareFormMail(await readForm(request));
 	} catch (error) {
-		const inputError = error instanceof FormInputError;
-		return Response.json(
-			{
-				success: false,
-				error: inputError
-					? error.message
-					: 'We could not send your message. Please try again later.'
-			},
-			{ status: inputError ? error.status : 502, headers }
-		);
+		if (error instanceof FormInputError) {
+			const category =
+				error.status === 403
+					? 'origin'
+					: error.status === 413
+						? 'body_size'
+						: error.status === 415
+							? 'body_type'
+							: 'fields';
+			console.warn('website_form', { event: 'input_rejected', category, status: error.status });
+			return Response.json(
+				{ success: false, error: error.message },
+				{ status: error.status, headers }
+			);
+		}
+		console.warn('website_form', { event: 'request_failed', code: 'unknown' });
+		return failedSend();
 	}
+	if (!prepared) {
+		console.info('website_form', { event: 'honeypot_dropped' });
+		return Response.json({ success: true }, { headers });
+	}
+	try {
+		const result = await send(prepared.mail, { idempotencyKey: prepared.idempotencyKey });
+		if (result.error || !result.data?.id) {
+			recordProviderFailure(result.error);
+			return failedSend();
+		}
+	} catch {
+		console.warn('website_form', { event: 'transport_failed', code: 'transport_error' });
+		return failedSend();
+	}
+	return Response.json({ success: true }, { headers });
 }

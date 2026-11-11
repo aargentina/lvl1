@@ -10,7 +10,7 @@ address. The route sends no confirmation to the customer.
 - The request must come from the same origin as the form page. A missing
   origin or a cross-site browser request is rejected.
 - The route accepts multipart or URL-encoded form data. It reads no more
-  than 32,768 body bytes, even when the request has no `Content-Length` or
+  than 131,072 body bytes, even when the request has no `Content-Length` or
   supplies a false length. Files, duplicate fields and unknown fields are
   rejected.
 - Names allow Unicode text and have a 120-character limit. Email addresses
@@ -22,10 +22,16 @@ address. The route sends no confirmation to the customer.
 - Group requests need a real calendar date, a whole number of people from
   1 to 9999, and the time, game and payment choices used by the form.
 - Customer text is escaped before it enters email HTML. The recipient and
-  sender are fixed in server code. Provider errors are not sent to the
-  customer or written to logs by this route.
+  sender are fixed in server code. Provider error details are not sent to the
+  customer. Logs use fixed event categories, an allowlisted provider code,
+  and a numeric error status from 400 to 599 when supplied. Unknown codes
+  become `unknown`; thrown send errors become `transport_error`. Each failed
+  request writes one diagnostic. Logs contain no customer text, raw error,
+  raw response, secret, retry key or payload hash.
 - Both forms have a labelled, offscreen field that must stay blank. A filled
-  field receives a quiet success response and sends no mail. This is an extra
+  field receives a quiet success response and sends no mail, including when
+  it contains long text, control characters or only spaces. The bounded body,
+  file, duplicate-field and unknown-field checks still run first. This is an extra
   spam check; it does not stop a caller that knows the form format.
 
 ## Repeat requests
@@ -37,8 +43,8 @@ key, so an uncertain earlier send does not prevent a corrected message.
 Resend keeps these keys for 24 hours. A new successful form submission gets
 a new ID. A native form post without JavaScript receives a fresh server ID, so
 it can still send mail. Native posts have no repeat-request guarantee across
-separate requests. A supplied invalid or duplicate ID is rejected. The browser also blocks a second submit while its first request
-is in progress.
+separate requests. A supplied invalid or duplicate ID is rejected. The
+browser also blocks a second submit while its first request is in progress.
 
 Resend 6.38.0 supplies the SDK idempotency option. The older 4.1.1 SDK did not
 support that option. See [Resend idempotency keys](https://resend.com/changelog/idempotency-keys).
@@ -80,7 +86,7 @@ mail paths and delivery events pass their checks.
 
 ## November 11 local check record
 
-- All 18 synthetic form and SDK tests passed on Node 24.18.0.
+- All 23 synthetic form and SDK tests passed on Node 24.18.0.
 - The affected source, tests and package file passed ESLint and Prettier.
   `git diff --check` passed.
 - The real changed components passed a local browser check with a fake
@@ -98,10 +104,36 @@ mail paths and delivery events pass their checks.
   source or assertion was changed for this repair.
 - Windows compiled the client and server bundles, but Vercel packaging
   could not create a function-directory symlink. A separate isolated
-  Linux build passed with Node 24.18.0: `npm ci`, `npm run build`, and
+  Linux build of the earlier form repair passed with Node 24.18.0: `npm ci`, `npm run build`, and
   the Vercel adapter all completed. The final Group fix was included.
   The Linux Node archive passed the official checksum check. The existing
   optional React-email-render tracing warning remains; this route uses HTML.
+
+## Consultation corrections
+
+The form body limit is now 128 KiB. A native URL-encoded request with 5,000
+CJK characters uses more than the former 32 KiB body limit. Tests now accept
+that full textarea limit in both forms. The over-cap, streamed and false-length
+checks remain in place.
+
+`src/lib/formOptions.ts` supplies the same 18 time choices to the browser
+and server. It also supplies the shared email-mismatch message. Correcting
+either group email field clears a resolved mismatch, including a server
+mismatch response. A count of 10000 returns the stated range error.
+
+The package and lock metadata now require Node `24.x`. The checked live
+website still uses Node 22. A preview from the final repair source must
+confirm Node 24 and pass the form checks before the production merge. This
+source change does not change the live project's settings. The final
+isolated Linux check of these corrections passed all 23 form tests and the
+complete production build. Its generated function configuration states
+`nodejs24.x`. The lock comparison confirmed that only root engine metadata
+changed, so the already passed clean dependency install was kept.
+
+The final local browser check also accepted Contact and Group requests
+with the shared module in place. The last time choice, 6:30 PM, was used.
+The shared mismatch message appeared for different addresses and cleared
+after correction. This check used the fake mail handler and sent no mail.
 
 The live website builds from `brandonoboyle/lvl1`. The owner assigned its
 repair PR merge to Brandon. Keep the Dashboard and Documents account move

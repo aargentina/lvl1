@@ -4,14 +4,24 @@ import { randomUUID } from 'node:crypto';
 import { registerHooks } from 'node:module';
 import { test } from 'node:test';
 import { readFileSync } from 'node:fs';
-import {
+registerHooks({
+	resolve(specifier, context, nextResolve) {
+		if (specifier === '$lib/formOptions')
+			return {
+				url: new URL('../src/lib/formOptions.ts', import.meta.url).href,
+				shortCircuit: true
+			};
+		return nextResolve(specifier, context);
+	}
+});
+const {
 	FORM_TEXT_LIMIT,
 	MAX_FORM_BYTES,
 	FormInputError,
 	checkFormOrigin,
 	handleFormEmail,
 	prepareFormMail
-} from '../src/lib/server/formEmail.ts';
+} = await import('../src/lib/server/formEmail.ts');
 
 const url = new URL('https://levelonegamepub.com/api/send-email');
 const contact = () => ({

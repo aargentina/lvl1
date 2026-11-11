@@ -1,32 +1,13 @@
 <script lang="ts">
 	import Bounded from '$lib/components/Bounded.svelte';
+	import { EMAIL_MISMATCH_MESSAGE, GROUP_TIME_OPTIONS } from '$lib/formOptions';
 
 	let submitting = $state(false);
 	let success = $state(false);
 	let error = $state('');
 	let emailMatch = $state(true);
 
-	// Time options for the dropdown
-	const timeOptions = [
-		'10:00 AM',
-		'10:30 AM',
-		'11:00 AM',
-		'11:30 AM',
-		'12:00 PM',
-		'12:30 PM',
-		'1:00 PM',
-		'1:30 PM',
-		'2:00 PM',
-		'2:30 PM',
-		'3:00 PM',
-		'3:30 PM',
-		'4:00 PM',
-		'4:30 PM',
-		'5:00 PM',
-		'5:30 PM',
-		'6:00 PM',
-		'6:30 PM'
-	];
+	const timeOptions = GROUP_TIME_OPTIONS;
 
 	// Game type options
 	const gameTypeOptions = [
@@ -53,7 +34,7 @@
 		const email = (form.elements.namedItem('email') as HTMLInputElement).value;
 		const confirmEmail = (form.elements.namedItem('confirmEmail') as HTMLInputElement).value;
 		emailMatch = !confirmEmail || email === confirmEmail;
-		if (emailMatch && error === 'Email addresses do not match') error = '';
+		if (emailMatch && error === EMAIL_MISMATCH_MESSAGE) error = '';
 	}
 
 	let submissionId = '';
@@ -75,7 +56,7 @@
 		const confirmEmail = formData.get('confirmEmail') as string;
 
 		if (!validateEmailMatch(email, confirmEmail)) {
-			error = 'Email addresses do not match';
+			error = EMAIL_MISMATCH_MESSAGE;
 			submitting = false;
 			return;
 		}
@@ -186,7 +167,7 @@
 							oninput={handleEmailInput}
 						/>
 						{#if !emailMatch}
-							<p class="mt-1 text-sm text-red-bright">Email addresses do not match</p>
+							<p class="mt-1 text-sm text-red-bright">{EMAIL_MISMATCH_MESSAGE}</p>
 						{/if}
 					</label>
 
