@@ -60,9 +60,93 @@ check the cart before another attempt.
 
 Checkout checks current collection membership and variant availability for all
 cart lines. It then reads a fresh Shopify checkout URL. The URL must use HTTPS,
-the exact store host and the `/cart/` path. A native form POST follows the
+the exact host `levelonegamepub.myshopify.com` or `checkout.levelonegamepub.com`,
+and the `/cart/` path. User information in the URL and unexpected ports are
+rejected. The code uses the URL returned by Shopify without a host or path
+change. A native form POST follows the
 external redirect. The site does not take payment or create a paid order.
 Shopify checkout applies the store's current tax, delivery and payment rules.
+
+## Branded checkout: checked state
+
+The prepared code accepts `checkout.levelonegamepub.com` as a checkout host.
+The Storefront API endpoint stays at `levelonegamepub.myshopify.com`. The domain
+and checkout settings below were checked in Shopify and the browser on
+November 11, 2026. These are live Shopify settings. The main site's shop code
+still needs Brandon's merge and the production check.
+
+The approved work set has three parts: the branded checkout domain, checkout
+colors and logo that match the main site, and links that return to the main
+shop. Keep their current live checks and the complete release in one work set.
+Brandon remains the assigned merge owner for PR 5.
+
+Bluehost has a `checkout` CNAME to `shops.myshopify.com`, with a four-hour TTL.
+The root, `www` and mail records were kept unchanged. Shopify has connected
+`checkout.levelonegamepub.com` with target **Online Store**, type **Primary**
+and a provisioned TLS certificate. The browser reached HTTPS checkout on this
+host. The main site's domain stays at Vercel. The existing Shopify online store
+also uses this primary domain; the change is not limited to the payment page.
+
+A copy of the checkout configuration is now Active. The original June 4
+configuration was preserved. The new configuration uses these settings:
+
+- The stored white logo `logo_x2_1`, centered at 250 pixels wide.
+- Header background `#191412` and header accent `#FCFCF9`.
+- Main background `#FCFCF9`, accent `#A91F2C` and button `#C0212F`.
+- Lato for headings and body text.
+- The old banner image was removed only from the new configuration.
+
+The browser extension's local-file setting blocked a logo upload. No workaround
+was used; the existing stored white logo was selected instead.
+
+The standard checkout logo and cart links still use Shopify's built-in
+`myshopify.com` destinations. The standard editor did not provide a destination
+control for them. The branding change did not change these return links.
+Advanced checkout header changes require Shopify Plus.
+
+Keep the existing Shopify theme, product forms and cart. The store also sells
+direct-link deposits outside Public shop. Shopify's full redirect theme would
+replace those pages, and a blanket product redirect would send excluded deposits
+to a main shop page that cannot sell them. The Shopify Online Store cart and the
+new main website cart are separate. Do not redirect every `/cart` request to
+`/shop/cart` or replace the existing Shopify checkout button.
+
+The draft theme `266341122104`, named
+`Level One — return links draft 2026-11-11`, is a copy of active theme `96116611`.
+It is not published. The saved menu `Main website return links — draft`, handle
+`main-website-return-links-draft`, is assigned to this draft's **Header > Secondary
+navigation**. Its links to the main website, `/shop` and `/shop/cart` were visible
+in the draft preview. Active theme `96116611` is unchanged.
+
+The draft preview kept the Add to cart forms for Test and one event ticket
+outside Public shop. Its `/cart` page showed the empty Shopify cart and the
+original Continue shopping link to `/collections/all`. No global redirect was
+added. The local image `outputs/shop-connection/return-links-draft.jpg` records
+the new menu in the draft.
+
+Do not publish the draft until Brandon merges PR 5 and the main site's `/shop`
+routes are live and checked. Then check its preview with one public item and
+one item outside Public shop. The added menu links belong to Online Store pages; they
+do not change built-in checkout return links or move the existing Shopify cart.
+
+The local shop cart's native checkout form reached
+`https://checkout.levelonegamepub.com` with one Test item at $100 CAD. No personal
+information was entered, and no payment or order was made. After the main-site
+release, check the actual logo, cart, product and Continue shopping destinations
+again. Keep the standard-plan return-link limit in the release record.
+
+Release note: the branded Shopify checkout domain and copied checkout branding
+are active and were checked in the browser. The main-site shop release and
+draft-theme publication still need their stated checks. The main website root
+returned HTTP 200, its `/shop` returned HTTP 500 before the shop release, and
+the new checkout domain root returned HTTP 200. The main shop is not live yet.
+The current Shopify sales pages remain available for direct-link deposits. No
+full redirect theme is part of this release.
+
+Record the verified domain, design and return-link results separately from the
+prepared source. After Brandon merges the complete PR, check the newest main
+deployment and its checkout path. Do not claim that local tests prove the live
+DNS, Shopify settings or production result.
 
 ## Local checks
 
@@ -92,7 +176,8 @@ On this Windows host, Vercel's adapter could compile and prerender but could not
 make its function symlinks. A separate Linux Node 24.18.0 build under
 `S:/Scratch/level-one-website-shop-20261111` checks the same complete source and
 lockfile without a Windows permission change. Keep the final build receipt in
-the local review output.
+the local review output. The final local build passed before these live-setting
+records were added to this guide. No application source changed after that build.
 
 ## Release and review
 
@@ -107,19 +192,38 @@ required Svelte 5 compatibility fixes and this guide. Do not merge through the
 old fork's main branch or change the Vercel Git connection.
 
 Before merge, check the latest source main, the complete diff, local results and
-any required GitHub or Vercel checks. After merge, verify the Git-triggered
-production deployment for the newest main commit. Check `/shop`, `/shop/test`,
-the empty cart, a product outside the collection and the phone layout. Test
-must still show $100 CAD and Sold out while its stock is zero.
+any required GitHub or Vercel checks. After Brandon merges, use one check session:
 
-The live collection was created with Test as its only item. Test's price, stock
-and shipping settings were not changed for these checks. A paid checkout was
-not tested. A live attempt to put sold-out Test in a cart returned one stock
-warning and a zero quantity. The code read the resulting empty cart back and
-checked that its secret key was absent from the rendered page. Its checkout
-URL used the expected Shopify host and cart path. No payment or order was made.
-An available item's add, update, remove and checkout controls use local test
-data until a suitable live product is approved for that check.
+1. Verify the Git-triggered production deployment for the newest source main.
+   Check `/shop`, `/shop/test` and the empty cart. Test must show $100 CAD, and its
+   buy state must match the current Shopify stock. Check the phone layout.
+2. Check that a direct main-site product URL outside Public shop is excluded.
+   Check that its original Shopify product form and Shopify cart still work.
+3. Use the approved Test flow to add one, update to two, follow the native
+   checkout redirect and remove the cart item. Confirm HTTPS on
+   `checkout.levelonegamepub.com` and that the cart key is absent from page data.
+   Do not enter personal information, make a payment or submit an order.
+4. Check the three new menu links in the draft theme after their main-site
+   routes are live. Keep the draft unpublished until these checks pass. Record
+   any later theme publication and verify the active theme and return links.
+
+The live collection was created with Test as its only item. The owner approved
+stock of five for Test so the available-item flow could be checked. The live
+checks added one Test item, updated the quantity to two, opened checkout and
+removed the item. The later branded-domain browser check used one Test item at
+$100 CAD. Test's price and shipping settings were kept unchanged. No personal
+information, payment or order was submitted.
+
+A fresh independent cart check after the domain change also passed: add one,
+update to two, receive the checkout HTTP 303 with host
+`checkout.levelonegamepub.com`, remove the item, and read an empty cart. The
+private cart key was absent from the returned page data. Its local receipt is
+`outputs/shop-connection/branded-cart-check.json`.
+
+The earlier sold-out check used zero stock. Shopify returned one stock warning
+and a zero quantity. The code read the resulting empty cart back and checked
+that its secret key was absent from the rendered page. This remains the
+sold-out test evidence; it is not Test's current stock setting.
 
 ## Sources
 
@@ -127,3 +231,10 @@ data until a suitable live product is approved for that check.
 - [Collections](https://help.shopify.com/en/manual/products/collections/create-collection)
 - [Cart](https://shopify.dev/docs/storefronts/headless/building-with-the-storefront-api/cart/manage)
 - [Checkout design](https://help.shopify.com/en/manual/checkout-settings/customize-checkout-configurations/checkout-style)
+- [Checkout subdomain and redirect theme](https://shopify.dev/docs/storefronts/hydrogen/deploy/go-live)
+- [Connect a subdomain](https://help.shopify.com/en/manual/domains/add-a-domain/connecting-domains/connect-subdomain)
+- [Primary domain behavior](https://help.shopify.com/en/manual/domains/domain-type/change-primary-domain)
+- [Shopify redirect theme](https://github.com/Shopify/hydrogen-redirect-theme)
+- [Checkout logo controls](https://shopify.dev/docs/api/admin-graphql/latest/objects/CheckoutBrandingLogo)
+- [Checkout cart link controls](https://shopify.dev/docs/api/admin-graphql/latest/objects/CheckoutBrandingCartLink)
+- [Checkout header extension and plan limit](https://shopify.dev/docs/apps/build/checkout/customize-header?extension=polaris)

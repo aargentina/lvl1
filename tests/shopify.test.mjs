@@ -269,7 +269,19 @@ test('bad quantities and IDs do not send a write', async () => {
 	assert.equal(calls.length, 0);
 });
 
-test('checkout only accepts the exact HTTPS shop host and cart path', async () => {
+test('checkout accepts the exact HTTPS Shopify and branded hosts with a cart path', async () => {
+	for (const host of ['levelonegamepub.myshopify.com', 'checkout.levelonegamepub.com']) {
+		const correct = `https://${host}/cart/c/opaque?key=private-key`;
+		const good = mock(data({ cart: { checkoutUrl: correct } }));
+		assert.equal(await good.client.checkoutUrl(cartId), correct);
+		assert.equal(
+			good.calls[0].url,
+			'https://levelonegamepub.myshopify.com/api/2026-10/graphql.json'
+		);
+	}
+});
+
+test('checkout rejects host suffix attacks, userinfo, HTTP, ports and other paths', async () => {
 	const correct = `https://levelonegamepub.myshopify.com/cart/c/opaque?key=private-key`;
 	const good = mock(data({ cart: { checkoutUrl: correct } }));
 	assert.equal(await good.client.checkoutUrl(cartId), correct);
@@ -279,7 +291,13 @@ test('checkout only accepts the exact HTTPS shop host and cart path', async () =
 		'https://evil.test/cart/c/a',
 		'https://user@levelonegamepub.myshopify.com/cart/c/a',
 		'https://levelonegamepub.myshopify.com:444/cart/c/a',
-		'https://levelonegamepub.myshopify.com/products/a'
+		'https://levelonegamepub.myshopify.com/products/a',
+		'http://checkout.levelonegamepub.com/cart/c/a',
+		'https://checkout.levelonegamepub.com.evil.test/cart/c/a',
+		'https://user@checkout.levelonegamepub.com/cart/c/a',
+		'https://checkout.levelonegamepub.com:444/cart/c/a',
+		'https://checkout.levelonegamepub.com/products/a',
+		'https://checkout.levelonegamepub.com/checkouts/cn/a'
 	]) {
 		const bad = mock(data({ cart: { checkoutUrl: url } }));
 		await assert.rejects(bad.client.checkoutUrl(cartId));

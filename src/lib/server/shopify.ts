@@ -12,6 +12,7 @@ import type {
 
 export const SHOPIFY_DOMAIN = 'levelonegamepub.myshopify.com';
 export const PUBLIC_SHOP_HANDLE = 'public-shop';
+const CHECKOUT_HOSTS = new Set([SHOPIFY_DOMAIN, 'checkout.levelonegamepub.com']);
 const ENDPOINT = `https://${SHOPIFY_DOMAIN}/api/2026-10/graphql.json`;
 const MAX_COLLECTION_PAGES = 20;
 const MAX_DETAIL_PAGES = 10;
@@ -420,7 +421,7 @@ export class ShopifyStorefront {
 			const url = new URL(value);
 			if (
 				url.protocol !== 'https:' ||
-				url.hostname !== SHOPIFY_DOMAIN ||
+				!CHECKOUT_HOSTS.has(url.hostname) ||
 				url.port ||
 				url.username ||
 				url.password ||
