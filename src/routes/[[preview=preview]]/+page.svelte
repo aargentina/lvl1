@@ -1,7 +1,8 @@
 <script lang="ts">
 	import Announcements from '$lib/slices/Announcements/index.svelte';
+	import type { PageData } from './$types';
 
-	let { data } = $props();
+	let { data }: { data: PageData } = $props();
 
 	function slowmo(node: HTMLVideoElement) {
 		node.playbackRate = 0.9;
@@ -115,7 +116,7 @@
 	</section>
 
 	<!-- ANNOUNCEMENTS -->
-	{#if announcementsSlice}
+	{#if announcementsSlice?.slice_type === 'announcements'}
 		<Announcements slice={announcementsSlice} />
 	{/if}
 

@@ -65,13 +65,17 @@ test('menu cards label instead of hiding', async (t) => {
 			}).body;
 		};
 
-		await t.test('New and unavailable can show together', () => {
+		await t.test('the retired New badge stays hidden while stock labels still work', () => {
 			const html = renderCards([card('House Salad')], {
 				'wm-0007': { unavailable: true, isNew: true }
 			});
 			assert.match(html, /House Salad/);
-			assert.match(html, />New</);
+			assert.doesNotMatch(html, />New</);
 			assert.match(html, /Temporarily unavailable/);
+			const available = renderCards([card('House Salad')], {
+				'wm-0007': { unavailable: false, isNew: true }
+			});
+			assert.doesNotMatch(available, />New<|Temporarily unavailable/);
 		});
 
 		await t.test('available items have no label', () => {

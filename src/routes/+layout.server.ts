@@ -21,6 +21,13 @@ export async function load({ fetch, cookies }) {
 			label: asText(item.label),
 			href: asLink(item.link) ?? '#'
 		}));
+	if (
+		!links.some(
+			(item) => item.href === '/shop' || item.href === 'https://www.levelonegamepub.com/shop'
+		)
+	) {
+		links.push({ label: 'Shop', href: '/shop' });
+	}
 
 	return { links, stockPreviewAllowed };
 }

@@ -1,0 +1,192 @@
+// These checks render local fixtures. No Shopify request or service token is used.
+import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { test } from 'node:test';
+import { createServer } from 'vite';
+import { svelte, vitePreprocess } from '@sveltejs/vite-plugin-svelte';
+
+const root = fileURLToPath(new URL('../', import.meta.url));
+const formModule = '\0shop-ui-test-forms';
+const money = (amount) => ({ amount, currencyCode: 'CAD' });
+const variant = (extra = {}) => ({
+	id: 'gid://shopify/ProductVariant/2',
+	title: 'Default Title',
+	availableForSale: false,
+	price: money('100.00'),
+	image: null,
+	selectedOptions: [{ name: 'Title', value: 'Default Title' }],
+	...extra
+});
+const product = (extra = {}) => ({
+	id: 'gid://shopify/Product/1',
+	handle: 'test',
+	title: 'Test',
+	description: 'A local product fixture.',
+	availableForSale: false,
+	featuredImage: null,
+	priceRange: { minVariantPrice: money('100.00'), maxVariantPrice: money('100.00') },
+	variants: [variant()],
+	...extra
+});
+const collection = (extra = {}) => ({
+	title: 'Public shop',
+	description: 'Items selected for public sale.',
+	products: [product()],
+	pageInfo: { hasNextPage: false, endCursor: null },
+	...extra
+});
+const cart = (extra = {}) => ({
+	totalQuantity: 2,
+	lines: [
+		{
+			id: 'gid://shopify/CartLine/3',
+			quantity: 2,
+			variant: {
+				...variant(),
+				price: money('13.25'),
+				product: { handle: 'test', title: 'Test' }
+			}
+		}
+	],
+	cost: {
+		subtotalAmount: money('25.50'),
+		totalAmount: money('28.82'),
+		totalTaxAmount: money('3.32')
+	},
+	...extra
+});
+const buttons = (html) => html.match(/<button\b[^>]*>[\s\S]*?<\/button>/g) ?? [];
+const formByAction = (html, action) =>
+	(html.match(/<form\b[^>]*>[\s\S]*?<\/form>/g) ?? []).find((form) =>
+		form.includes(`action="?/${action}"`)
+	);
+
+test('shop pages render current sale data and safe purchase states', async (t) => {
+	const server = await createServer({
+		root,
+		configFile: false,
+		cacheDir: path.join(root, 'node_modules/.vite-shop-ui-tests'),
+		plugins: [
+			{
+				name: 'shop-ui-test-forms',
+				resolveId(id) {
+					return id === '$app/forms' ? formModule : null;
+				},
+				load(id) {
+					return id === formModule ? 'export function enhance() {}' : null;
+				}
+			},
+			svelte({ configFile: false, preprocess: vitePreprocess(), hot: false })
+		],
+		resolve: { alias: { $lib: path.join(root, 'src/lib') } },
+		server: { host: '127.0.0.1', middlewareMode: true, hmr: false, watch: null },
+		ssr: { noExternal: ['svelte'] },
+		optimizeDeps: { noDiscovery: true, include: [] }
+	});
+	try {
+		const { render } = await server.ssrLoadModule('svelte/server');
+		const { default: Shop } = await server.ssrLoadModule('/src/routes/shop/+page.svelte');
+		const { default: Product } = await server.ssrLoadModule(
+			'/src/routes/shop/[handle]/+page.svelte'
+		);
+		const { default: Cart } = await server.ssrLoadModule('/src/routes/shop/cart/+page.svelte');
+		const renderShop = (value) => render(Shop, { props: { data: { collection: value } } }).body;
+		const renderProduct = (value, form = null) =>
+			render(Product, { props: { data: { product: value }, form } }).body;
+		const renderCart = (value, extra = {}, form = null) =>
+			render(Cart, {
+				props: { data: { cart: value, notice: null, checkoutBlocked: false, ...extra }, form }
+			}).body;
+
+		await t.test('sold-out Test stays visible and cannot be added', () => {
+			const list = renderShop(collection());
+			assert.match(list, /href="\/shop\/test"/);
+			assert.match(list, /Sold out/);
+			assert.match(list, /\$100\.00/);
+			const detail = renderProduct(product());
+			const addButton = buttons(detail).find((button) => button.includes('Sold out'));
+			assert.ok(addButton);
+			assert.match(addButton, /\sdisabled(?:\s|=|>)/);
+			assert.match(detail, /name="quantity"[^>]*min="1"[^>]*max="99"[^>]*\sdisabled(?:\s|=|>)/);
+		});
+
+		await t.test('available variant uses its current price and purchase identifier', () => {
+			const detail = renderProduct(
+				product({
+					availableForSale: true,
+					variants: [variant({ availableForSale: true, price: money('47.60') })]
+				})
+			);
+			assert.match(detail, /\$47\.60/);
+			assert.match(detail, /name="variantId" value="gid:\/\/shopify\/ProductVariant\/2"/);
+			const addButton = buttons(detail).find((button) => button.includes('Add to cart'));
+			assert.ok(addButton);
+			assert.doesNotMatch(addButton, /\sdisabled(?:\s|=|>)/);
+			assert.match(formByAction(detail, 'add'), /method="POST"/);
+		});
+
+		await t.test('product text and action errors are escaped', () => {
+			const text = '<img src=x onerror=alert(1)><script>alert(2)</script>';
+			const detail = renderProduct(product({ description: text, title: text }), { message: text });
+			assert.doesNotMatch(detail, /<script>|<img src=x/);
+			assert.match(detail, /&lt;script(?:&gt;|>)/);
+			assert.match(detail, /role="alert"/);
+			assert.doesNotMatch(renderShop(collection({ description: text })), /<script>|<img src=x/);
+		});
+
+		await t.test('collection cursor is encoded and empty collection has no sale link', () => {
+			const list = renderShop(
+				collection({ pageInfo: { hasNextPage: true, endCursor: 'cursor+/=?&' } })
+			);
+			assert.match(list, /href="\/shop\?after=cursor%2B%2F%3D%3F%26"/);
+			const empty = renderShop(collection({ products: [] }));
+			assert.match(empty, /There are no items in the shop/);
+			assert.doesNotMatch(empty, /href="\/shop\/test"/);
+		});
+
+		await t.test('cart shows Shopify quantity and subtotal without rebuilding the price', () => {
+			const html = renderCart(cart());
+			assert.match(html, /name="quantity"[^>]*min="1"[^>]*max="99"[^>]*value="2"/);
+			assert.match(html, /\$13\.25/);
+			assert.match(html, /\$25\.50/);
+			assert.doesNotMatch(html, /\$26\.50/);
+			assert.match(
+				formByAction(html, 'update'),
+				/name="lineId" value="gid:\/\/shopify\/CartLine\/3"/
+			);
+			assert.match(
+				formByAction(html, 'remove'),
+				/name="lineId" value="gid:\/\/shopify\/CartLine\/3"/
+			);
+		});
+
+		await t.test('blocked cart gives a direct reason and disables checkout', () => {
+			const html = renderCart(cart(), { checkoutBlocked: true, notice: 'Stock has changed.' });
+			assert.match(html, /An item is no longer available\. Remove it before checkout\./);
+			assert.match(html, /Stock has changed\./);
+			assert.match(formByAction(html, 'checkout'), /<button\b[^>]*\sdisabled(?:\s|=|>)/);
+		});
+
+		await t.test('empty cart has no checkout form; allowed checkout uses native POST', async () => {
+			assert.equal(formByAction(renderCart(null), 'checkout'), undefined);
+			assert.equal(
+				formByAction(renderCart(cart({ totalQuantity: 0, lines: [] })), 'checkout'),
+				undefined
+			);
+			const html = renderCart(cart());
+			const checkout = formByAction(html, 'checkout');
+			assert.ok(checkout);
+			assert.match(checkout, /method="POST"/);
+			assert.doesNotMatch(checkout, /\sdisabled(?:\s|=|>)/);
+			// SSR does not run actions. Check the source to guard the external 303 handoff.
+			const source = await readFile(path.join(root, 'src/routes/shop/cart/+page.svelte'), 'utf8');
+			const checkoutTag = source.match(/<form\b[^>]*action="\?\/checkout"[^>]*>/)?.[0];
+			assert.ok(checkoutTag);
+			assert.doesNotMatch(checkoutTag, /use:enhance/);
+		});
+	} finally {
+		await server.close();
+	}
+});

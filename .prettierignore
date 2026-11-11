@@ -2,3 +2,10 @@
 pnpm-lock.yaml
 package-lock.json
 yarn.lock
+node_modules/
+.svelte-kit/
+.vercel/
+build/
+dist/
+outputs/
+work/

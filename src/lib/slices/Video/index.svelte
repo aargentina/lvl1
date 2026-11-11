@@ -39,16 +39,20 @@
 	}
 
 	const embedUrl = $derived(
-		isFilled.link(slice.primary.videolink) ? getVimeoEmbedUrl(slice.primary.videolink.url) : null
+		isFilled.link(slice.primary.videolink) && slice.primary.videolink.url
+			? getVimeoEmbedUrl(slice.primary.videolink.url)
+			: null
 	);
 
-	const posterUrl = $derived(isFilled.image(slice.primary.poster) ? slice.primary.poster.url : null);
+	const posterUrl = $derived(
+		isFilled.image(slice.primary.poster) ? slice.primary.poster.url : null
+	);
 </script>
 
 <section
 	data-slice-type={slice.slice_type}
 	data-slice-variation={slice.variation}
-	class="relative -mt-24 h-screen w-screen bg-ink-noise md:-mt-20"
+	class="bg-ink-noise relative -mt-24 h-screen w-screen md:-mt-20"
 	style="margin-left: calc(-50vw + 50%);"
 >
 	<div class="absolute inset-0 overflow-hidden">

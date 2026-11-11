@@ -3,7 +3,7 @@
 	import clsx from 'clsx';
 
 	export let tag = 'section';
-	export let yPadding: 'sm' | 'base' | 'lg' = 'base';
+	export let yPadding: 'xs' | 'sm' | 'base' | 'lg' = 'base';
 	export let collapsible = true;
 </script>
 
@@ -12,7 +12,6 @@
 	data-collapsible={collapsible}
 	{...$$restProps}
 	class={clsx(
-		
 		yPadding === 'sm' && 'py-8 md:py-10',
 		yPadding === 'base' && 'py-20 md:py-14',
 		yPadding === 'lg' && 'py-32 md:py-48',

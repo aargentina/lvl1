@@ -12,3 +12,7 @@ vite.config.ts.timestamp-*
 /.claude
 # Local dev notes (not part of the site)
 .notes/
+
+# Local review files and temporary work
+/outputs/
+/work/

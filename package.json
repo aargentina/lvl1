@@ -10,6 +10,7 @@
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
 		"test:menu": "node --experimental-strip-types --test tests/menu-stock.test.mjs tests/menu-labels.test.mjs",
+		"test:shop": "node --test tests/shopify.test.mjs tests/shop-routes.test.mjs tests/shop-ui.test.mjs",
 		"lint": "prettier --check . && eslint .",
 		"format": "prettier --write .",
 		"slicemachine": "start-slicemachine"
@@ -52,7 +53,7 @@
 		"@fontsource/lato": "^5.2.5",
 		"@fontsource/open-sans": "^5.2.5",
 		"@prismicio/client": "^7.17.3",
-		"@prismicio/svelte": "^1.3.0",
+		"@prismicio/svelte": "2.2.1",
 		"@sveltejs/adapter-vercel": "6.2.0",
 		"@vercel/analytics": "^1.4.1",
 		"@vercel/speed-insights": "^1.1.0",

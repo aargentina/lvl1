@@ -30,6 +30,9 @@ npm run dev
 | `/api/send-email`  | Contact form email endpoint                              |
 | `/api/preview`     | Prismic preview handler                                  |
 | `/slice-simulator` | Local Slice Machine simulator                            |
+| `/shop`            | Live Shopify Public shop collection                      |
+| `/shop/[handle]`   | Public shop product and variant selection                |
+| `/shop/cart`       | Guest cart and Shopify checkout                          |
 
 ## Slices
 
@@ -39,16 +42,24 @@ Content slices managed via Prismic Slice Machine:
 
 ## Scripts
 
-| Command                | Description                          |
-| ---------------------- | ------------------------------------ |
-| `npm run dev`          | Start dev server + Slice Machine     |
-| `npm run build`        | Production build                     |
-| `npm run preview`      | Preview production build             |
-| `npm run check`        | Type-check with svelte-check         |
-| `npm run test:menu`    | Test the menu labels and stock proxy |
-| `npm run lint`         | Lint and format check                |
-| `npm run format`       | Format files                         |
-| `npm run slicemachine` | Start Slice Machine UI only          |
+| Command                | Description                             |
+| ---------------------- | --------------------------------------- |
+| `npm run dev`          | Start dev server + Slice Machine        |
+| `npm run build`        | Production build                        |
+| `npm run preview`      | Preview production build                |
+| `npm run check`        | Type-check with svelte-check            |
+| `npm run test:menu`    | Test the menu labels and stock proxy    |
+| `npm run test:shop`    | Test the shop, cart and purchase checks |
+| `npm run lint`         | Lint and format check                   |
+| `npm run format`       | Format files                            |
+| `npm run slicemachine` | Start Slice Machine UI only             |
+
+## Shopify shop
+
+Add public items to the manual **Public shop** collection in Shopify. The main
+site reads its products, prices and availability on each request. Shopify keeps
+the cart, checkout and orders. See [the shop guide](docs/SHOPIFY_SHOP.md) for the
+product steps, local checks, access limits and release plan.
 
 ## Live menu availability
 

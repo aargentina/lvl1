@@ -14,8 +14,8 @@
 	import Hyperlink from '$lib/components/PrismicRichText/Hyperlink.svelte';
 
 	interface Props {
-		field: ComponentProps<PrismicRichText>['field'];
-		components?: ComponentProps<PrismicRichText>['components'];
+		field: ComponentProps<typeof PrismicRichText>['field'];
+		components?: ComponentProps<typeof PrismicRichText>['components'];
 	}
 
 	let { field, components = {} }: Props = $props();
