@@ -3,17 +3,23 @@
 
 	import { PrismicPreview } from '@prismicio/svelte/kit';
 	import { page } from '$app/stores';
-	import { repositoryName, createClient } from '$lib/prismicio';
+	import { repositoryName } from '$lib/prismicio';
 	import Header from '$lib/components/Header.svelte';
 	import Footer from '$lib/components/Footer.svelte';
 	import { dev } from '$app/environment';
 	import { inject } from '@vercel/analytics';
+	import {
+		BOOKING_ROBOTS,
+		BOOKING_TITLE,
+		filterBookingAnalytics,
+		isBookingPath
+	} from '$lib/booking-privacy';
 
-	inject({ mode: dev ? 'development' : 'production' });
+	inject({ mode: dev ? 'development' : 'production', beforeSend: filterBookingAnalytics });
+
+	const bookingPage = $derived(isBookingPath($page.url.pathname));
 
 	let { children } = $props();
-
-	const client = createClient();
 
 	const siteUrl = 'https://levelonegamepub.com';
 
@@ -42,40 +48,47 @@
 </script>
 
 <svelte:head>
-	<title>{$page.data.title}</title>
-	<link rel="canonical" href="{siteUrl}{$page.url.pathname}" />
+	{#if bookingPage}
+		<title>{BOOKING_TITLE}</title>
+		<meta name="robots" content={BOOKING_ROBOTS} />
+	{:else}
+		<title>{$page.data.title}</title>
+		<link rel="canonical" href="{siteUrl}{$page.url.pathname}" />
 
-	{#if $page.data.meta_description}
-		<meta name="description" content={$page.data.meta_description} />
-	{/if}
+		{#if $page.data.meta_description}
+			<meta name="description" content={$page.data.meta_description} />
+		{/if}
 
-	<!-- Open Graph -->
-	<meta property="og:type" content="website" />
-	<meta property="og:url" content="{siteUrl}{$page.url.pathname}" />
-	{#if $page.data.meta_title}
-		<meta property="og:title" content={$page.data.meta_title} />
-	{/if}
-	{#if $page.data.meta_description}
-		<meta property="og:description" content={$page.data.meta_description} />
-	{/if}
-	{#if $page.data.meta_image}
-		<meta property="og:image" content={$page.data.meta_image.url} />
-	{/if}
+		<!-- Open Graph -->
+		<meta property="og:type" content="website" />
+		<meta property="og:url" content="{siteUrl}{$page.url.pathname}" />
+		{#if $page.data.meta_title}
+			<meta property="og:title" content={$page.data.meta_title} />
+		{/if}
+		{#if $page.data.meta_description}
+			<meta property="og:description" content={$page.data.meta_description} />
+		{/if}
+		{#if $page.data.meta_image}
+			<meta property="og:image" content={$page.data.meta_image.url} />
+		{/if}
 
-	<!-- Twitter Card -->
-	<meta name="twitter:card" content="summary_large_image" />
-	{#if $page.data.meta_title}
-		<meta name="twitter:title" content={$page.data.meta_title} />
-	{/if}
-	{#if $page.data.meta_description}
-		<meta name="twitter:description" content={$page.data.meta_description} />
-	{/if}
-	{#if $page.data.meta_image}
-		<meta name="twitter:image" content={$page.data.meta_image.url} />
-	{/if}
+		<!-- Twitter Card -->
+		<meta name="twitter:card" content="summary_large_image" />
+		{#if $page.data.meta_title}
+			<meta name="twitter:title" content={$page.data.meta_title} />
+		{/if}
+		{#if $page.data.meta_description}
+			<meta name="twitter:description" content={$page.data.meta_description} />
+		{/if}
+		{#if $page.data.meta_image}
+			<meta name="twitter:image" content={$page.data.meta_image.url} />
+		{/if}
 
-	<!-- Structured Data: LocalBusiness + Organization -->
-	{@html `<script type="application/ld+json">${JSON.stringify(localBusinessSchema)}</script>`}
+		<!-- Structured Data: LocalBusiness + Organization -->
+		<svelte:element this={'script'} type="application/ld+json"
+			>{JSON.stringify(localBusinessSchema)}</svelte:element
+		>
+	{/if}
 </svelte:head>
 <div class="flex min-h-screen flex-col">
 	<Header />

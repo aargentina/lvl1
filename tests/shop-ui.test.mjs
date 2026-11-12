@@ -5,6 +5,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { test } from 'node:test';
 import { createServer } from 'vite';
+import { createServer as createHttpServer } from 'node:http';
 import { svelte, vitePreprocess } from '@sveltejs/vite-plugin-svelte';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
@@ -64,6 +65,8 @@ const formByAction = (html, action) =>
 	);
 
 test('shop pages render current sale data and safe purchase states', async (t) => {
+	const hmrServer = createHttpServer();
+	await new Promise((resolve) => hmrServer.listen(0, '127.0.0.1', resolve));
 	const server = await createServer({
 		root,
 		configFile: false,
@@ -81,7 +84,7 @@ test('shop pages render current sale data and safe purchase states', async (t) =
 			svelte({ configFile: false, preprocess: vitePreprocess(), hot: false })
 		],
 		resolve: { alias: { $lib: path.join(root, 'src/lib') } },
-		server: { host: '127.0.0.1', middlewareMode: true, hmr: false, watch: null },
+		server: { host: '127.0.0.1', middlewareMode: true, hmr: { server: hmrServer }, watch: null },
 		ssr: { noExternal: ['svelte'] },
 		optimizeDeps: { noDiscovery: true, include: [] }
 	});
@@ -92,6 +95,12 @@ test('shop pages render current sale data and safe purchase states', async (t) =
 			'/src/routes/shop/[handle]/+page.svelte'
 		);
 		const { default: Cart } = await server.ssrLoadModule('/src/routes/shop/cart/+page.svelte');
+		const { default: Booking } = await server.ssrLoadModule(
+			'/src/routes/bookings/[handle]/+page.svelte'
+		);
+		const { default: BookingCart } = await server.ssrLoadModule(
+			'/src/routes/bookings/cart/+page.svelte'
+		);
 		const renderShop = (value) => render(Shop, { props: { data: { collection: value } } }).body;
 		const renderProduct = (value, form = null) =>
 			render(Product, { props: { data: { product: value }, form } }).body;
@@ -99,6 +108,59 @@ test('shop pages render current sale data and safe purchase states', async (t) =
 			render(Cart, {
 				props: { data: { cart: value, notice: null, checkoutBlocked: false, ...extra }, form }
 			}).body;
+		const renderBooking = (value, form = null) =>
+			render(Booking, { props: { data: { product: value }, form } }).body;
+		const renderBookingCart = (value, extra = {}, form = null) =>
+			render(BookingCart, {
+				props: { data: { cart: value, notice: null, checkoutBlocked: false, ...extra }, form }
+			}).body;
+
+		await t.test('booking detail uses the shared purchase design and a separate cart', () => {
+			const value = product({
+				title: 'Reservation deposit',
+				handle: 'private-booking',
+				availableForSale: true,
+				variants: [variant({ availableForSale: true })]
+			});
+			const html = renderBooking(value);
+			assert.match(html, /Reservation deposit/);
+			assert.match(html, /Reservation booking/);
+			assert.match(html, /href="\/bookings\/cart"/);
+			assert.doesNotMatch(html, /href="\/bookings"|href="\/shop(?:\/|"|\?)/);
+			assert.match(html, /href="\/contact"/);
+			assert.match(formByAction(html, 'add'), /method="POST"/);
+			assert.doesNotMatch(
+				buttons(html).find((button) => button.includes('Add to cart')),
+				/\sdisabled(?:\s|=|>)/
+			);
+		});
+
+		await t.test(
+			'booking cart links stay in the booking flow and the empty state has no catalogue',
+			() => {
+				const html = renderBookingCart(cart());
+				assert.match(html, /Your booking cart/);
+				assert.match(html, /href="\/bookings\/test"/);
+				assert.doesNotMatch(html, /href="\/shop(?:\/|"|\?)/);
+				assert.match(formByAction(html, 'checkout'), /method="POST"/);
+				const empty = renderBookingCart(null);
+				assert.match(empty, /Open the booking link we sent you/);
+				assert.doesNotMatch(empty, /href="\/bookings"|href="\/shop(?:\/|"|\?)/);
+				assert.equal(formByAction(empty, 'checkout'), undefined);
+			}
+		);
+
+		await t.test('booking text is escaped and unavailable bookings cannot be added', () => {
+			const html = renderBooking(
+				product({ title: '<script>private</script>', description: '<img src=x onerror=alert(1)>' })
+			);
+			assert.doesNotMatch(html, /<script>|<img src=x/);
+			assert.match(html, /&lt;script(?:&gt;|>)/);
+			assert.match(
+				buttons(html).find((button) => button.includes('Sold out')),
+				/\sdisabled(?:\s|=|>)/
+			);
+		});
 
 		await t.test('sold-out Test stays visible and cannot be added', () => {
 			const list = renderShop(collection());
@@ -181,12 +243,16 @@ test('shop pages render current sale data and safe purchase states', async (t) =
 			assert.match(checkout, /method="POST"/);
 			assert.doesNotMatch(checkout, /\sdisabled(?:\s|=|>)/);
 			// SSR does not run actions. Check the source to guard the external 303 handoff.
-			const source = await readFile(path.join(root, 'src/routes/shop/cart/+page.svelte'), 'utf8');
+			const source = await readFile(
+				path.join(root, 'src/lib/components/ShopCartView.svelte'),
+				'utf8'
+			);
 			const checkoutTag = source.match(/<form\b[^>]*action="\?\/checkout"[^>]*>/)?.[0];
 			assert.ok(checkoutTag);
 			assert.doesNotMatch(checkoutTag, /use:enhance/);
 		});
 	} finally {
 		await server.close();
+		if (hmrServer.listening) await new Promise((resolve) => hmrServer.close(resolve));
 	}
 });

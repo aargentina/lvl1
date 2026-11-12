@@ -10,7 +10,7 @@
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
 		"test:menu": "node --experimental-strip-types --test tests/menu-stock.test.mjs tests/menu-labels.test.mjs",
-		"test:shop": "node --test tests/shopify.test.mjs tests/shop-routes.test.mjs tests/shop-ui.test.mjs",
+		"test:shop": "node --test tests/shopify.test.mjs tests/shop-routes.test.mjs tests/shop-ui.test.mjs tests/booking-routes.test.mjs tests/booking-privacy.test.mjs tests/booking-head.test.mjs",
 		"lint": "prettier --check . && eslint .",
 		"format": "prettier --write .",
 		"slicemachine": "start-slicemachine"

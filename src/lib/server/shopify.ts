@@ -254,6 +254,17 @@ export class ShopifyStorefront {
 	async product(handle: string): Promise<ShopProduct | null> {
 		if (!/^[a-z0-9][a-z0-9-]{0,254}$/.test(handle)) return null;
 		if (!(await this.isMember(handle))) return null;
+		return this.readProduct(handle);
+	}
+
+	async bookingProduct(handle: string): Promise<ShopProduct | null> {
+		if (!/^[a-z0-9][a-z0-9-]{0,254}$/.test(handle)) return null;
+		// A complete membership read must exclude this handle before the direct read.
+		if (await this.isMember(handle)) return null;
+		return this.readProduct(handle);
+	}
+
+	private async readProduct(handle: string): Promise<ShopProduct | null> {
 		let after: string | null = null,
 			result: ShopProduct | null = null;
 		const seen = new Set<string>(),

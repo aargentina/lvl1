@@ -25,6 +25,54 @@ returned quantity and any warning.
 Keep party deposits, private event payments and other direct-link items outside
 this collection. The existing Toast gift card link stays in the main navigation.
 
+## Booking pages by direct link
+
+Use `https://www.levelonegamepub.com/bookings/<product-handle>` for a reservation
+or deposit that stays outside Public shop. The handle is the last part of its
+existing Shopify `/products/<product-handle>` link. The main-site booking page
+uses the same product design, header, footer, fonts and colours as the shop.
+Its price, description, variants and availability come from Shopify.
+
+These new links need this PR's main-site release. Existing Shopify links still
+open their original Shopify pages. They are not redirected to the new booking
+pages during local preparation.
+
+There is no booking catalogue or public navigation link. Booking pages do not
+appear in the main shop or sitemap. The server checks the complete Public shop
+collection before it reads a booking by its exact handle. A public product
+cannot open through the booking route. A missing, unpublished or unavailable
+source is not used as proof that a product is a private booking.
+
+An available Shopify product outside Public shop can use this direct-link route.
+No extra tag or collection is needed. To hide its original Shopify page from
+Shopify search, listings and the Shopify sitemap, set the product status to
+**Unlisted**. Keep the Online Store publication required for its direct product
+page and checkout. Unlisted products can be read by exact handle through the
+Storefront API. This work does not change existing booking product statuses.
+
+Booking pages and their data, errors and action responses use private, no-store
+caching and `X-Robots-Tag: noindex, nofollow, nosnippet, noimageindex`. Their HTML
+has a generic title and robots tag, with no canonical, Open Graph, Twitter or
+structured-data fields. Booking analytics events are dropped. The response
+uses `Referrer-Policy: strict-origin`. This sends only the site origin, with no
+booking path or query, and preserves the Origin header for native form POSTs.
+Do not use `no-referrer` here: it makes native POST origins null and blocks
+checkout before the application handler runs.
+
+These headers apply to responses handled by the application. SvelteKit rejects
+cross-origin form posts before this hook runs. That generic HTTP 403 has no
+booking data. Keep the framework's origin protection enabled.
+
+These are unlisted pages, not password-protected pages. Anyone with the URL can
+open them. Their product details are sent to the person who opens the page.
+
+The booking cart at `/bookings/cart` is separate from `/shop/cart`. It uses its
+own HttpOnly cookie at `/bookings` and its own notices. Public purchases stay in
+the public cart. Booking cart updates and checkout recheck that each product is
+still outside Public shop and that its selected variant is available. Moving
+an item between the two flows blocks the old cart's checkout until that item
+is removed. Checkout still uses Shopify on `checkout.levelonegamepub.com`.
+
 ## Routes and data
 
 - `/shop` reads one page of the Public shop collection. The next-page link reads
@@ -34,6 +82,8 @@ this collection. The existing Toast gift card link stays in the main navigation.
 - `/shop/cart` reads the guest cart. Its form actions add, update or remove lines
   and start Shopify checkout.
 - `/shop` is included in the sitemap. Product links can be found from the shop.
+- `/bookings/[handle]` reads one outside product by direct link only.
+- `/bookings/cart` has separate cart reads, actions and checkout.
 
 Shopify requests use the fixed store `levelonegamepub.myshopify.com` and
 Storefront API version `2026-10`. Basic products, collections and cart requests
@@ -225,6 +275,11 @@ and a zero quantity. The code read the resulting empty cart back and checked
 that its secret key was absent from the rendered page. This remains the
 sold-out test evidence; it is not Test's current stock setting.
 
+The owner later added the Advanced November 22 and Beginner November 29 Blood
+on the Clocktower products to Public shop. The collection now has those two
+products and Test. Both event pages and their current $20.34 CAD prices were
+checked in the local preview. Their prices, stock and shipping were unchanged.
+
 ## Sources
 
 - [Storefront API](https://shopify.dev/docs/storefronts/headless/building-with-the-storefront-api)
@@ -238,3 +293,4 @@ sold-out test evidence; it is not Test's current stock setting.
 - [Checkout logo controls](https://shopify.dev/docs/api/admin-graphql/latest/objects/CheckoutBrandingLogo)
 - [Checkout cart link controls](https://shopify.dev/docs/api/admin-graphql/latest/objects/CheckoutBrandingCartLink)
 - [Checkout header extension and plan limit](https://shopify.dev/docs/apps/build/checkout/customize-header?extension=polaris)
+- [Unlisted products and direct Storefront API reads](https://shopify.dev/docs/apps/build/product-merchandising/unlisted-products)

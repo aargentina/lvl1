@@ -1,18 +1,27 @@
 <script lang="ts">
-	let { current = 'shop' }: { current?: 'shop' | 'cart' } = $props();
+	import { shopRoot, type ShopScope } from '$lib/shop';
+	let { current = 'shop', scope = 'shop' }: { current?: 'shop' | 'cart'; scope?: ShopScope } =
+		$props();
 </script>
 
-<nav aria-label="Shop" class="border-chalk/15 border-b bg-ink font-body text-sm text-chalk">
+<nav
+	aria-label={scope === 'booking' ? 'Reservation booking' : 'Shop'}
+	class="border-chalk/15 border-b bg-ink font-body text-sm text-chalk"
+>
 	<div class="mx-auto flex max-w-7xl items-center justify-between gap-4 px-6 py-4 lg:px-10">
+		{#if scope === 'booking'}
+			<span class="font-black">Reservation booking</span>
+		{:else}
+			<a
+				href="/shop"
+				aria-current={current === 'shop' ? 'page' : undefined}
+				class="inline-flex min-h-10 items-center font-black underline-offset-4 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-chalk"
+			>
+				Shop
+			</a>
+		{/if}
 		<a
-			href="/shop"
-			aria-current={current === 'shop' ? 'page' : undefined}
-			class="inline-flex min-h-10 items-center font-black underline-offset-4 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-chalk"
-		>
-			Shop
-		</a>
-		<a
-			href="/shop/cart"
+			href="{shopRoot(scope)}/cart"
 			aria-current={current === 'cart' ? 'page' : undefined}
 			class="border-chalk/50 hover:bg-chalk/10 inline-flex min-h-10 items-center gap-2 rounded border px-4 font-black transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-chalk"
 		>
@@ -24,7 +33,7 @@
 					stroke-linejoin="round"
 				/>
 			</svg>
-			Cart
+			{scope === 'booking' ? 'Booking cart' : 'Cart'}
 		</a>
 	</div>
 </nav>

@@ -1,5 +1,6 @@
 import { redirect, error } from '@sveltejs/kit';
 import type { Handle } from '@sveltejs/kit';
+import { BOOKING_HEADERS, isBookingPath } from '$lib/booking-privacy';
 
 // Legacy WordPress URL patterns that should return 410 Gone
 const gonePatterns = [
@@ -40,5 +41,14 @@ export const handle: Handle = async ({ event, resolve }) => {
 		}
 	}
 
-	return resolve(event);
+	const response = await resolve(event);
+	if (!isBookingPath(path)) return response;
+
+	const headers = new Headers(response.headers);
+	for (const [name, value] of Object.entries(BOOKING_HEADERS)) headers.set(name, value);
+	return new Response(response.body, {
+		status: response.status,
+		statusText: response.statusText,
+		headers
+	});
 };

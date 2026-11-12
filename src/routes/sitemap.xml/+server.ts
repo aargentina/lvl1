@@ -1,6 +1,7 @@
 import { createClient } from '$lib/prismicio';
 import type { RequestHandler } from '@sveltejs/kit';
 import { predicate } from '@prismicio/client';
+import { isBookingPath } from '$lib/booking-privacy';
 
 export const GET: RequestHandler = async () => {
 	try {
@@ -16,7 +17,7 @@ export const GET: RequestHandler = async () => {
 		// Build XML with enhanced metadata
 		const urls =
 			documents
-				.filter((doc) => doc.uid) // Ensure document has a UID
+				.filter((doc) => doc.uid && !isBookingPath(`/${doc.uid}`))
 				.map((doc) => {
 					const path = doc.uid === 'home' ? '' : `/${doc.uid}`;
 					const lastmod = doc.last_publication_date

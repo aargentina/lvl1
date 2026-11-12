@@ -2,11 +2,23 @@ import { dev } from '$app/environment';
 import { error } from '@sveltejs/kit';
 import type { Cookies, RequestEvent } from '@sveltejs/kit';
 import { ShopifyStorefront } from './shopify';
-import type { ShopCart } from '$lib/shop';
+import { shopRoot, type ShopCart, type ShopScope } from '$lib/shop';
 
 const CART_COOKIE = 'level_one_shop_cart';
 const NOTICE_COOKIE = 'level_one_shop_notice';
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 10;
+
+function cartCookie(scope: ShopScope) {
+	return scope === 'booking' ? 'level_one_booking_cart' : CART_COOKIE;
+}
+
+function noticeCookie(scope: ShopScope) {
+	return scope === 'booking' ? 'level_one_booking_notice' : NOTICE_COOKIE;
+}
+
+export function saleProduct(client: ShopifyStorefront, handle: string, scope: ShopScope = 'shop') {
+	return scope === 'booking' ? client.bookingProduct(handle) : client.product(handle);
+}
 
 export function shopClient(event: RequestEvent) {
 	let buyerIp: string | undefined;
@@ -30,17 +42,17 @@ export function requireShopOrigin(event: RequestEvent) {
 	}
 }
 
-export function cartId(cookies: Cookies) {
-	const value = cookies.get(CART_COOKIE);
+export function cartId(cookies: Cookies, scope: ShopScope = 'shop') {
+	const value = cookies.get(cartCookie(scope));
 	return value && value.length <= 1024 && value.startsWith('gid://shopify/Cart/') ? value : null;
 }
 
-export function saveCart(event: RequestEvent, id: string) {
+export function saveCart(event: RequestEvent, id: string, scope: ShopScope = 'shop') {
 	if (!id.startsWith('gid://shopify/Cart/') || id.length > 1024) {
 		throw new Error('The cart response is not valid.');
 	}
-	event.cookies.set(CART_COOKIE, id, {
-		path: '/shop',
+	event.cookies.set(cartCookie(scope), id, {
+		path: shopRoot(scope),
 		httpOnly: true,
 		secure: event.url.protocol === 'https:',
 		sameSite: 'lax',
@@ -48,13 +60,13 @@ export function saveCart(event: RequestEvent, id: string) {
 	});
 }
 
-export function forgetCart(cookies: Cookies) {
-	cookies.delete(CART_COOKIE, { path: '/shop' });
+export function forgetCart(cookies: Cookies, scope: ShopScope = 'shop') {
+	cookies.delete(cartCookie(scope), { path: shopRoot(scope) });
 }
 
-export function saveShopNotice(event: RequestEvent, message: string) {
-	event.cookies.set(NOTICE_COOKIE, message.slice(0, 600), {
-		path: '/shop',
+export function saveShopNotice(event: RequestEvent, message: string, scope: ShopScope = 'shop') {
+	event.cookies.set(noticeCookie(scope), message.slice(0, 600), {
+		path: shopRoot(scope),
 		httpOnly: true,
 		secure: event.url.protocol === 'https:',
 		sameSite: 'lax',
@@ -62,9 +74,9 @@ export function saveShopNotice(event: RequestEvent, message: string) {
 	});
 }
 
-export function takeShopNotice(cookies: Cookies) {
-	const notice = cookies.get(NOTICE_COOKIE) ?? null;
-	if (notice) cookies.delete(NOTICE_COOKIE, { path: '/shop' });
+export function takeShopNotice(cookies: Cookies, scope: ShopScope = 'shop') {
+	const notice = cookies.get(noticeCookie(scope)) ?? null;
+	if (notice) cookies.delete(noticeCookie(scope), { path: shopRoot(scope) });
 	return notice;
 }
 
@@ -79,10 +91,14 @@ export function shopQuantity(data: FormData) {
 	return Number(value);
 }
 
-export async function cartCanCheckout(client: ShopifyStorefront, cart: ShopCart) {
+export async function cartCanCheckout(
+	client: ShopifyStorefront,
+	cart: ShopCart,
+	scope: ShopScope = 'shop'
+) {
 	if (!cart.lines.length || !cart.totalQuantity) return false;
 	for (const line of cart.lines) {
-		const product = await client.product(line.variant.product.handle);
+		const product = await saleProduct(client, line.variant.product.handle, scope);
 		const variant = product?.variants.find((candidate) => candidate.id === line.variant.id);
 		if (!variant?.availableForSale) return false;
 	}

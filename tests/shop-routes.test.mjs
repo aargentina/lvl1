@@ -3,19 +3,24 @@ import assert from 'node:assert/strict';
 import { after, before, test } from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { createServer } from 'vite';
+import { createServer as createHttpServer } from 'node:http';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 let server;
+let hmrServer;
 let collectionRoute;
 let productRoute;
 let cartRoute;
 
 before(async () => {
+	hmrServer = createHttpServer();
+	await new Promise((resolve) => hmrServer.listen(0, '127.0.0.1', resolve));
 	server = await createServer({
 		root,
 		configFile: false,
+		cacheDir: fileURLToPath(new URL('../node_modules/.vite-shop-routes-tests', import.meta.url)),
 		resolve: { alias: { $lib: fileURLToPath(new URL('../src/lib', import.meta.url)) } },
-		server: { middlewareMode: true, watch: null },
+		server: { host: '127.0.0.1', middlewareMode: true, watch: null, hmr: { server: hmrServer } },
 		plugins: [
 			{
 				name: 'shop-test-environment',
@@ -37,6 +42,7 @@ before(async () => {
 
 after(async () => {
 	await server?.close();
+	if (hmrServer?.listening) await new Promise((resolve) => hmrServer.close(resolve));
 });
 
 const money = { amount: '100.00', currencyCode: 'CAD' };

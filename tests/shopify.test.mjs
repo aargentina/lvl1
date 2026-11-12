@@ -110,6 +110,153 @@ test('membership errors do not fall back to an unrestricted product read', async
 	assert.equal(calls.length, 1);
 });
 
+test('booking reads an unlisted direct-link fixture only after complete public exclusion', async () => {
+	// Unlisted items can be returned by an exact handle query, not a public listing.
+	const unlistedBooking = {
+		...product,
+		id: 'gid://shopify/Product/8',
+		handle: 'private-booking',
+		title: 'Private booking',
+		availableForSale: true,
+		variants: { nodes: [{ ...variant, availableForSale: true }], pageInfo: end }
+	};
+	const { client, calls, remaining } = mock(
+		data(member(['test'], more('public-next'))),
+		data(member(['public-event'])),
+		data({ product: unlistedBooking })
+	);
+	const result = await client.bookingProduct('private-booking');
+	assert.equal(result.handle, 'private-booking');
+	assert.equal(result.availableForSale, true);
+	assert.equal(calls.length, 3);
+	assert.equal(calls[0].body.variables.handle, 'public-shop');
+	assert.equal(calls[1].body.variables.after, 'public-next');
+	assert.equal(calls[2].body.variables.handle, 'private-booking');
+	assert.match(calls[2].body.query, /product\(handle: \$handle\)/);
+	assert.equal(
+		calls.some((call) => /search\s*\(|tags\s*\(|mutation\s/.test(call.body.query)),
+		false
+	);
+	assert.equal(
+		calls.some((call) =>
+			Object.keys(call.init.headers).some((key) => /token|authorization/i.test(key))
+		),
+		false
+	);
+	assert.equal(remaining(), 0);
+	const publicRead = mock(data(member(['test', 'public-event'])));
+	assert.equal(await publicRead.client.product('private-booking'), null);
+	assert.equal(publicRead.calls.length, 1);
+});
+
+test('booking rejects a public product on any collection page before its product read', async () => {
+	for (const responses of [
+		[data(member())],
+		[data(member(['other'], more('public-next'))), data(member())]
+	]) {
+		const expectedCalls = responses.length;
+		const { client, calls } = mock(...responses);
+		assert.equal(await client.bookingProduct('test'), null);
+		assert.equal(calls.length, expectedCalls);
+		assert.equal(
+			calls.every((call) => call.body.query.includes('PublicShopMembership')),
+			true
+		);
+	}
+});
+
+test('booking rejects malformed handles without a source request', async () => {
+	const { client, calls } = mock();
+	for (const handle of [
+		'',
+		'../test',
+		'Test',
+		'private/booking',
+		'https://example.com',
+		'a'.repeat(256)
+	]) {
+		assert.equal(await client.bookingProduct(handle), null);
+	}
+	assert.equal(calls.length, 0);
+});
+
+test('booking membership failure cannot permit a direct product read', async () => {
+	for (const responses of [
+		[data({ collection: null })],
+		[new Error('network')],
+		[{ data: member(['test']), errors: [{ message: 'partial source' }] }],
+		[data(member(['test'], more('public-next'))), new Error('second page failed')],
+		[data(member(['test'], more('same'))), data(member(['other'], more('same')))],
+		[data({ collection: { products: { nodes: [], pageInfo: more(null) } } })]
+	]) {
+		const expectedCalls = responses.length;
+		const { client, calls } = mock(...responses);
+		await assert.rejects(client.bookingProduct('private-booking'));
+		assert.equal(calls.length, expectedCalls);
+		assert.equal(
+			calls.every((call) => call.body.query.includes('PublicShopMembership')),
+			true
+		);
+	}
+	const bounded = mock(
+		...Array.from({ length: 20 }, (_, index) =>
+			data(member(['test'], more(`public-page-${index}`)))
+		)
+	);
+	await assert.rejects(bounded.client.bookingProduct('private-booking'));
+	assert.equal(bounded.calls.length, 20);
+	assert.equal(
+		bounded.calls.every((call) => call.body.query.includes('PublicShopMembership')),
+		true
+	);
+});
+
+test('missing or depublished booking returns null; partial product data fails closed', async () => {
+	const missing = mock(data(member(['test'])), data({ product: null }));
+	assert.equal(await missing.client.bookingProduct('private-booking'), null);
+	for (const response of [
+		new Error('direct source failed'),
+		data({ product: { title: 'Incomplete booking' } }),
+		{ data: { product }, errors: [{ message: 'partial product' }] }
+	]) {
+		const { client, calls } = mock(data(member(['test'])), response);
+		await assert.rejects(client.bookingProduct('private-booking'));
+		assert.equal(calls.length, 2);
+	}
+});
+
+test('booking variant pages use the shared reader and reject incomplete results', async () => {
+	const booking = { ...product, handle: 'private-booking' };
+	const secondVariant = { ...variant, id: 'gid://shopify/ProductVariant/2', title: 'Second' };
+	const complete = mock(
+		data(member(['test'])),
+		data({
+			product: { ...booking, variants: { nodes: [variant], pageInfo: more('variants-next') } }
+		}),
+		data({ product: { ...booking, variants: { nodes: [secondVariant], pageInfo: end } } })
+	);
+	const result = await complete.client.bookingProduct('private-booking');
+	assert.equal(result.variants.length, 2);
+	assert.equal(complete.calls[2].body.variables.after, 'variants-next');
+	assert.equal(complete.calls[2].body.variables.handle, 'private-booking');
+	const failed = mock(
+		data(member(['test'])),
+		data({
+			product: { ...booking, variants: { nodes: [variant], pageInfo: more('variants-next') } }
+		}),
+		new Error('variant source failed')
+	);
+	await assert.rejects(failed.client.bookingProduct('private-booking'));
+	const duplicate = mock(
+		data(member(['test'])),
+		data({
+			product: { ...booking, variants: { nodes: [variant], pageInfo: more('variants-next') } }
+		}),
+		data({ product: { ...booking, variants: { nodes: [variant], pageInfo: end } } })
+	);
+	await assert.rejects(duplicate.client.bookingProduct('private-booking'));
+});
+
 test('membership and variant reads follow cursors and keep sold-out data', async () => {
 	const secondVariant = {
 		...variant,

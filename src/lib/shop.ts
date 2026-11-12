@@ -1,3 +1,9 @@
+export type ShopScope = 'shop' | 'booking';
+
+export function shopRoot(scope: ShopScope = 'shop') {
+	return scope === 'booking' ? '/bookings' : '/shop';
+}
+
 export type ShopMoney = { amount: string; currencyCode: string };
 export type ShopImage = {
 	url: string;
