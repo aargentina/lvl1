@@ -1,0 +1,54 @@
+import type { Client } from '@prismicio/client';
+
+export type ShopSettings = {
+	heading: string;
+	intro: string;
+	banner: { url: string; alt: string } | null;
+	notice: string;
+};
+
+const text = (value: unknown): string => (typeof value === 'string' ? value.trim() : '');
+
+function banner(value: unknown): ShopSettings['banner'] {
+	if (!value || typeof value !== 'object' || !('url' in value)) return null;
+	if (typeof value.url !== 'string') return null;
+	try {
+		const url = new URL(value.url);
+		if (
+			url.protocol !== 'https:' ||
+			url.username ||
+			url.password ||
+			url.port ||
+			(url.hostname !== 'images.prismic.io' && !url.hostname.endsWith('.cdn.prismic.io'))
+		)
+			return null;
+		return { url: url.href, alt: 'alt' in value ? text(value.alt) : '' };
+	} catch {
+		return null;
+	}
+}
+
+export async function loadShopSettings(
+	client: Pick<Client, 'getSingle'>,
+	collectionDescription: string
+): Promise<ShopSettings> {
+	try {
+		const document = await client.getSingle('shop_settings', {
+			fetchOptions: { signal: AbortSignal.timeout(5000), cache: 'no-store' }
+		});
+		return {
+			heading: text(document.data.heading) || 'Shop',
+			intro: text(document.data.intro),
+			banner: banner(document.data.banner),
+			notice: text(document.data.notice)
+		};
+	} catch {
+		// A missing or unavailable settings document must not block public sales.
+		return {
+			heading: 'Shop',
+			intro: text(collectionDescription) || 'Shop items from Level One Game Pub.',
+			banner: { url: '/redesign/games-bg.jpg', alt: '' },
+			notice: ''
+		};
+	}
+}

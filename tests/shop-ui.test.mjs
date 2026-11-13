@@ -38,6 +38,13 @@ const collection = (extra = {}) => ({
 	pageInfo: { hasNextPage: false, endCursor: null },
 	...extra
 });
+const shopSettings = (extra = {}) => ({
+	heading: 'Shop',
+	intro: 'Items selected for public sale.',
+	banner: { url: '/redesign/games-bg.jpg', alt: '' },
+	notice: '',
+	...extra
+});
 const cart = (extra = {}) => ({
 	totalQuantity: 2,
 	lines: [
@@ -101,7 +108,8 @@ test('shop pages render current sale data and safe purchase states', async (t) =
 		const { default: BookingCart } = await server.ssrLoadModule(
 			'/src/routes/bookings/cart/+page.svelte'
 		);
-		const renderShop = (value) => render(Shop, { props: { data: { collection: value } } }).body;
+		const renderShop = (value, settings = shopSettings({ intro: value.description })) =>
+			render(Shop, { props: { data: { collection: value, shopSettings: settings } } }).body;
 		const renderProduct = (value, form = null) =>
 			render(Product, { props: { data: { product: value }, form } }).body;
 		const renderCart = (value, extra = {}, form = null) =>
@@ -114,6 +122,57 @@ test('shop pages render current sale data and safe purchase states', async (t) =
 			render(BookingCart, {
 				props: { data: { cart: value, notice: null, checkoutBlocked: false, ...extra }, form }
 			}).body;
+
+		await t.test(
+			'Prismic shop fields change the page without changing Shopify product cards',
+			() => {
+				const html = renderShop(
+					collection(),
+					shopSettings({
+						heading: 'Games and events',
+						intro: 'Find your next game.\nBook an event.',
+						banner: {
+							url: 'https://images.prismic.io/lvl1/shop-banner-fixture.jpg',
+							alt: 'Games at Level One'
+						},
+						notice: 'Event tickets cannot be returned.'
+					})
+				);
+				assert.match(html, /<h1\b[^>]*>Games and events<\/h1>/);
+				assert.match(html, /Find your next game\.\nBook an event\./);
+				assert.match(html, /src="https:\/\/images\.prismic\.io\/lvl1\/shop-banner-fixture\.jpg"/);
+				assert.match(html, /alt="Games at Level One"/);
+				assert.match(html, /Event tickets cannot be returned\./);
+				assert.doesNotMatch(html, /Items selected for public sale\./);
+				assert.match(html, /href="\/shop\/test"/);
+				assert.match(html, /\$100\.00/);
+				assert.match(html, /Sold out/);
+			}
+		);
+
+		await t.test('shop text and banner alt text are escaped', () => {
+			const text = '<img src=x onerror=alert(1)><script>alert(2)</script>';
+			const html = renderShop(
+				collection(),
+				shopSettings({
+					heading: text,
+					intro: text,
+					banner: { url: 'https://images.prismic.io/lvl1/shop-banner-fixture.jpg', alt: text },
+					notice: text
+				})
+			);
+			assert.doesNotMatch(html, /<script>|<img src=x/);
+			assert.match(html, /&lt;script(?:&gt;|>)/);
+			assert.match(html, /href="\/shop\/test"/);
+		});
+
+		await t.test('blank optional shop fields hide their content', () => {
+			const html = renderShop(collection(), shopSettings({ intro: '', banner: null, notice: '' }));
+			assert.match(html, /<h1\b[^>]*>Shop<\/h1>/);
+			assert.doesNotMatch(html, /games-bg\.jpg|Items selected for public sale\./);
+			assert.doesNotMatch(html, /role="(?:status|note|alert)"/);
+			assert.match(html, /href="\/shop\/test"/);
+		});
 
 		await t.test('booking detail uses the shared purchase design and a separate cart', () => {
 			const value = product({

@@ -18,19 +18,25 @@
 <section
 	class="relative overflow-hidden border-b-4 border-red bg-ink px-6 py-14 font-body text-chalk lg:px-10 lg:py-20"
 >
-	<img
-		src="/redesign/games-bg.jpg"
-		alt=""
-		class="absolute inset-0 h-full w-full object-cover opacity-10"
-	/>
+	{#if data.shopSettings.banner}
+		<img
+			src={data.shopSettings.banner.url}
+			alt={data.shopSettings.banner.alt}
+			class="absolute inset-0 h-full w-full object-cover opacity-10"
+		/>
+	{/if}
 	<div class="relative mx-auto max-w-7xl">
 		<p class="text-chalk/70 mb-4 text-xs font-black uppercase tracking-[0.18em]">
 			Level One Game Pub
 		</p>
-		<h1 class="font-display text-5xl font-black tracking-[0.03em] sm:text-6xl lg:text-7xl">Shop</h1>
-		<p class="text-chalk/80 mt-6 max-w-2xl whitespace-pre-line text-base leading-7">
-			{data.collection.description || 'Shop items from Level One Game Pub.'}
-		</p>
+		<h1 class="font-display text-5xl font-black tracking-[0.03em] sm:text-6xl lg:text-7xl">
+			{data.shopSettings.heading}
+		</h1>
+		{#if data.shopSettings.intro}
+			<p class="text-chalk/80 mt-6 max-w-2xl whitespace-pre-line text-base leading-7">
+				{data.shopSettings.intro}
+			</p>
+		{/if}
 	</div>
 </section>
 
@@ -38,6 +44,14 @@
 	class="mx-auto max-w-7xl px-6 py-12 font-body text-chalk lg:px-10 lg:py-16"
 	aria-labelledby="products-heading"
 >
+	{#if data.shopSettings.notice}
+		<aside
+			aria-label="Shop notice"
+			class="bg-chalk/5 mb-8 rounded-xl border-l-4 border-red px-6 py-5"
+		>
+			<p class="whitespace-pre-line text-base leading-7">{data.shopSettings.notice}</p>
+		</aside>
+	{/if}
 	<h2 id="products-heading" class="mb-8 font-display text-3xl font-black sm:text-4xl">
 		{data.collection.title}
 	</h2>

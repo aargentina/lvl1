@@ -3,6 +3,48 @@
 The shop uses the main site's SvelteKit pages, header, footer, fonts and colors.
 Shopify keeps the products, prices, stock, cart, checkout and orders.
 
+## Edit the shop page in Prismic
+
+Open the single **Shop settings** document in Prismic. Edit these four fields:
+
+- **Heading**: the large title at the top. A blank heading uses `Shop`.
+- **Intro**: the text below the heading. Leave it blank to hide it.
+- **Banner**: the image behind the heading. Select an image from the Prismic
+  media library. It uses the site's dark overlay so the text stays readable.
+  Clear the image to hide it.
+- **Notice text**: the notice above the product list. Leave it blank to hide it.
+
+Save and publish the document. After the website release, its published values
+are read on each shop request. No site rebuild is needed for these content
+changes. Prismic's preview resolves this document to `/shop` and uses the
+existing preview cookie. The preview endpoint must point to a website version
+that contains this connection.
+
+The `shop_settings` model is saved in `customtypes/shop_settings/index.json`.
+It has one document per locale, not a page for each product. The product list,
+collection heading, product images, descriptions, prices and stock still come
+from Shopify. The page layout, fonts and colours stay in website code. Shop
+settings do not change private booking pages or Shopify checkout.
+
+If the settings document is absent, unavailable or times out after five
+seconds, the shop uses its original heading, collection intro and local banner.
+An existing document with blank optional fields hides those fields. Text is
+rendered as plain text, and banners must use HTTPS on a Prismic image host.
+
+Setup on November 13, 2026: the live repository `lvl1` has the four-field
+single model. A new **Shop settings** document is saved in the pending release
+**Shop settings — 2026-11-13** (`avdwAhEAAMIEQly5`). It has heading `Shop`, intro
+`Shop items from Level One Game Pub.`, the original games background copied to
+Prismic's media library, and a blank notice. The release is not published.
+Its real Prismic preview opened the local shop and used that Prismic image.
+No payment or product change was needed for this check.
+
+The website's existing preview endpoint adds `/preview` to resolved routes.
+For the exact Shop settings destination `/preview/shop`, it now returns `/shop`
+and keeps the SDK's preview cookie and response headers. Other page previews
+keep their existing destinations. After Brandon merges the website change,
+publish the settings release and check all four fields on the live shop.
+
 ## Add an item for public sale
 
 1. Create or edit the product in Shopify.

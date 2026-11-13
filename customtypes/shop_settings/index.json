@@ -1,0 +1,37 @@
+{
+	"id": "shop_settings",
+	"label": "Shop settings",
+	"format": "custom",
+	"repeatable": false,
+	"status": true,
+	"json": {
+		"Main": {
+			"heading": {
+				"type": "Text",
+				"config": { "label": "Heading", "placeholder": "Shop" }
+			},
+			"intro": {
+				"type": "Text",
+				"config": {
+					"label": "Intro",
+					"placeholder": "Text below the shop heading. Leave blank to hide it."
+				}
+			},
+			"banner": {
+				"type": "Image",
+				"config": {
+					"label": "Banner",
+					"constraint": {},
+					"thumbnails": []
+				}
+			},
+			"notice": {
+				"type": "Text",
+				"config": {
+					"label": "Notice text",
+					"placeholder": "Text above the products. Leave blank to hide it."
+				}
+			}
+		}
+	}
+}

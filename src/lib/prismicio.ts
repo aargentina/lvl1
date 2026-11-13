@@ -15,7 +15,8 @@ export const repositoryName = import.meta.env.VITE_PRISMIC_ENVIRONMENT || sm.rep
 const routes: prismic.ClientConfig['routes'] = [
 	{ type: 'page', path: '/:uid' },
 	{ type: 'page', uid: 'home', path: '/' },
-	{ type: 'navigation', path: '/' }
+	{ type: 'navigation', path: '/' },
+	{ type: 'shop_settings', path: '/shop' }
 ];
 
 /**

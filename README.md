@@ -63,6 +63,11 @@ site reads its products, prices and availability on each request. Shopify keeps
 the cart, checkout and orders. See [the shop guide](docs/SHOPIFY_SHOP.md) for the
 product steps, local checks, access limits and release plan.
 
+Edit the shop heading, intro, banner and notice in the Prismic **Shop settings**
+document. Publish the document to use the changes on the next shop request.
+Products, prices and stock stay in Shopify. This connection needs the website
+release before it changes the live shop.
+
 For a booking or deposit outside Public shop, use `/bookings/<product-handle>`.
 It uses the main site's design and a separate booking cart. These pages have
 no public listing or sitemap entry and ask search engines not to index them.

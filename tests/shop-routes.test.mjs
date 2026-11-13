@@ -6,11 +6,13 @@ import { createServer } from 'vite';
 import { createServer as createHttpServer } from 'node:http';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
+const prismicModule = '\0shop-test-prismic';
 let server;
 let hmrServer;
 let collectionRoute;
 let productRoute;
 let cartRoute;
+let prismicFixture;
 
 before(async () => {
 	hmrServer = createHttpServer();
@@ -19,15 +21,30 @@ before(async () => {
 		root,
 		configFile: false,
 		cacheDir: fileURLToPath(new URL('../node_modules/.vite-shop-routes-tests', import.meta.url)),
-		resolve: { alias: { $lib: fileURLToPath(new URL('../src/lib', import.meta.url)) } },
+		resolve: {
+			alias: [
+				{ find: '$lib/prismicio', replacement: prismicModule },
+				{ find: '$lib', replacement: fileURLToPath(new URL('../src/lib', import.meta.url)) }
+			]
+		},
 		server: { host: '127.0.0.1', middlewareMode: true, watch: null, hmr: { server: hmrServer } },
 		plugins: [
 			{
 				name: 'shop-test-environment',
 				resolveId(id) {
+					if (id === prismicModule) return id;
 					if (id === '$app/environment') return '\0shop-test-environment';
 				},
 				load(id) {
+					if (id === prismicModule)
+						return `export const calls = []; export const types = [];
+						export function createClient(config) {
+							calls.push(config);
+							return { async getSingle(type) {
+								types.push(type);
+								return { data: { heading: 'Games and events', intro: 'New shop introduction', banner: {}, notice: 'A shop notice' } };
+							} };
+						}`;
 					if (id === '\0shop-test-environment') return 'export const dev = false;';
 				}
 			}
@@ -38,6 +55,7 @@ before(async () => {
 		server.ssrLoadModule('/src/routes/shop/[handle]/+page.server.ts'),
 		server.ssrLoadModule('/src/routes/shop/cart/+page.server.ts')
 	]);
+	prismicFixture = await server.ssrLoadModule(prismicModule);
 });
 
 after(async () => {
@@ -155,6 +173,36 @@ function event(options = {}) {
 const data = (value) => ({ data: value });
 const isStatus = (status) => (result) => result?.status === status;
 const addFields = { variantId, quantity: '1' };
+
+test('the shop combines public Shopify products with Prismic settings and preview cookies', async () => {
+	const input = event({
+		path: '/shop',
+		responses: [
+			data({
+				collection: {
+					title: 'Public shop',
+					description: 'Old collection introduction',
+					products: { nodes: [], pageInfo }
+				}
+			})
+		]
+	});
+	const result = await collectionRoute.load(input);
+	assert.equal(result.collection.title, 'Public shop');
+	assert.deepEqual(result.collection.products, []);
+	assert.deepEqual(result.shopSettings, {
+		heading: 'Games and events',
+		intro: 'New shop introduction',
+		banner: null,
+		notice: 'A shop notice'
+	});
+	const clientOptions = prismicFixture.calls.at(-1);
+	assert.equal(clientOptions.fetch, input.fetch);
+	assert.equal(clientOptions.cookies, input.cookies);
+	assert.equal(prismicFixture.types.at(-1), 'shop_settings');
+	assert.equal(input.responseHeaders['Cache-Control'], 'private, no-store');
+	assert.equal(input.calls.length, 1);
+});
 
 test('a sold-out product blocks an addition before any cart write', async () => {
 	const input = event({

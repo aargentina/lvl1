@@ -25,16 +25,16 @@ type PickContentRelationshipFieldData<
 			TSubRelationship['customtypes'],
 			TLang
 		>;
-	} & // Group
-	{
+	} & {
+		// Group
 		[TGroup in Extract<
 			TRelationship['fields'][number],
 			prismic.CustomTypeModelFetchGroupLevel1 | prismic.CustomTypeModelFetchGroupLevel2
 		> as TGroup['id']]: TData[TGroup['id']] extends prismic.GroupField<infer TGroupData>
 			? prismic.GroupField<PickContentRelationshipFieldData<TGroup, TGroupData, TLang>>
 			: never;
-	} & // Other fields
-	{
+	} & {
+		// Other fields
 		[TFieldKey in Extract<TRelationship['fields'][number], string>]: TFieldKey extends keyof TData
 			? TData[TFieldKey]
 			: never;
@@ -276,7 +276,75 @@ export type SettingsDocument<Lang extends string = string> = prismic.PrismicDocu
 	Lang
 >;
 
-export type AllDocumentTypes = NavigationDocument | PageDocument | SettingsDocument;
+/**
+ * Content for Shop settings documents
+ */
+interface ShopSettingsDocumentData {
+	/**
+	 * Heading field in *Shop settings*
+	 *
+	 * - **Field Type**: Text
+	 * - **Placeholder**: Shop
+	 * - **API ID Path**: shop_settings.heading
+	 * - **Tab**: Main
+	 * - **Documentation**: https://prismic.io/docs/fields/text
+	 */
+	heading: prismic.KeyTextField;
+
+	/**
+	 * Intro field in *Shop settings*
+	 *
+	 * - **Field Type**: Text
+	 * - **Placeholder**: Text below the shop heading. Leave blank to hide it.
+	 * - **API ID Path**: shop_settings.intro
+	 * - **Tab**: Main
+	 * - **Documentation**: https://prismic.io/docs/fields/text
+	 */
+	intro: prismic.KeyTextField;
+
+	/**
+	 * Banner field in *Shop settings*
+	 *
+	 * - **Field Type**: Image
+	 * - **Placeholder**: *None*
+	 * - **API ID Path**: shop_settings.banner
+	 * - **Tab**: Main
+	 * - **Documentation**: https://prismic.io/docs/fields/image
+	 */
+	banner: prismic.ImageField<never>;
+
+	/**
+	 * Notice text field in *Shop settings*
+	 *
+	 * - **Field Type**: Text
+	 * - **Placeholder**: Text above the products. Leave blank to hide it.
+	 * - **API ID Path**: shop_settings.notice
+	 * - **Tab**: Main
+	 * - **Documentation**: https://prismic.io/docs/fields/text
+	 */
+	notice: prismic.KeyTextField;
+}
+
+/**
+ * Shop settings document from Prismic
+ *
+ * - **API ID**: `shop_settings`
+ * - **Repeatable**: `false`
+ * - **Documentation**: https://prismic.io/docs/content-modeling
+ *
+ * @typeParam Lang - Language API ID of the document.
+ */
+export type ShopSettingsDocument<Lang extends string = string> = prismic.PrismicDocumentWithoutUID<
+	Simplify<ShopSettingsDocumentData>,
+	'shop_settings',
+	Lang
+>;
+
+export type AllDocumentTypes =
+	| NavigationDocument
+	| PageDocument
+	| SettingsDocument
+	| ShopSettingsDocument;
 
 /**
  * Item in *Announcements → Default → Primary → Cards*
@@ -909,6 +977,85 @@ type ImageSliceVariation = ImageSliceDefault | ImageSliceBanner;
 export type ImageSlice = prismic.SharedSlice<'image', ImageSliceVariation>;
 
 /**
+ * Primary content in *Imagewithtext → Default → Primary*
+ */
+export interface ImagewithtextSliceDefaultPrimary {
+	/**
+	 * image field in *Imagewithtext → Default → Primary*
+	 *
+	 * - **Field Type**: Image
+	 * - **Placeholder**: *None*
+	 * - **API ID Path**: imagewithtext.default.primary.image
+	 * - **Documentation**: https://prismic.io/docs/fields/image
+	 */
+	image: prismic.ImageField<never>;
+
+	/**
+	 * text field in *Imagewithtext → Default → Primary*
+	 *
+	 * - **Field Type**: Rich Text
+	 * - **Placeholder**: *None*
+	 * - **API ID Path**: imagewithtext.default.primary.text
+	 * - **Documentation**: https://prismic.io/docs/fields/rich-text
+	 */
+	text: prismic.RichTextField;
+}
+
+/**
+ * Default variation for Imagewithtext Slice
+ *
+ * - **API ID**: `default`
+ * - **Description**: Default
+ * - **Documentation**: https://prismic.io/docs/slices
+ */
+export type ImagewithtextSliceDefault = prismic.SharedSliceVariation<
+	'default',
+	Simplify<ImagewithtextSliceDefaultPrimary>,
+	never
+>;
+
+/**
+ * Slice variation for *Imagewithtext*
+ */
+type ImagewithtextSliceVariation = ImagewithtextSliceDefault;
+
+/**
+ * Imagewithtext Shared Slice
+ *
+ * - **API ID**: `imagewithtext`
+ * - **Description**: Imagewithtext
+ * - **Documentation**: https://prismic.io/docs/slices
+ */
+export type ImagewithtextSlice = prismic.SharedSlice<'imagewithtext', ImagewithtextSliceVariation>;
+
+/**
+ * Default variation for LargeReso Slice
+ *
+ * - **API ID**: `default`
+ * - **Description**: Default
+ * - **Documentation**: https://prismic.io/docs/slices
+ */
+export type LargeResoSliceDefault = prismic.SharedSliceVariation<
+	'default',
+	Record<string, never>,
+	never
+>;
+
+/**
+ * Slice variation for *LargeReso*
+ */
+type LargeResoSliceVariation = LargeResoSliceDefault;
+
+/**
+ * LargeReso Shared Slice
+ *
+ * - **API ID**: `large_reso`
+ * - **Description**: LargeReso
+ * - **Documentation**: https://prismic.io/docs/slices
+ */
+export type LargeResoSlice = prismic.SharedSlice<'large_reso', LargeResoSliceVariation>;
+
+/**
  * Item in *MenuItems → Default → Primary → Cards*
  */
 export interface ImageCardsSliceDefaultPrimaryCardsItem {
@@ -1046,85 +1193,6 @@ type ImageCardsSliceVariation = ImageCardsSliceDefault;
  * - **Documentation**: https://prismic.io/docs/slices
  */
 export type ImageCardsSlice = prismic.SharedSlice<'image_cards', ImageCardsSliceVariation>;
-
-/**
- * Primary content in *Imagewithtext → Default → Primary*
- */
-export interface ImagewithtextSliceDefaultPrimary {
-	/**
-	 * image field in *Imagewithtext → Default → Primary*
-	 *
-	 * - **Field Type**: Image
-	 * - **Placeholder**: *None*
-	 * - **API ID Path**: imagewithtext.default.primary.image
-	 * - **Documentation**: https://prismic.io/docs/fields/image
-	 */
-	image: prismic.ImageField<never>;
-
-	/**
-	 * text field in *Imagewithtext → Default → Primary*
-	 *
-	 * - **Field Type**: Rich Text
-	 * - **Placeholder**: *None*
-	 * - **API ID Path**: imagewithtext.default.primary.text
-	 * - **Documentation**: https://prismic.io/docs/fields/rich-text
-	 */
-	text: prismic.RichTextField;
-}
-
-/**
- * Default variation for Imagewithtext Slice
- *
- * - **API ID**: `default`
- * - **Description**: Default
- * - **Documentation**: https://prismic.io/docs/slices
- */
-export type ImagewithtextSliceDefault = prismic.SharedSliceVariation<
-	'default',
-	Simplify<ImagewithtextSliceDefaultPrimary>,
-	never
->;
-
-/**
- * Slice variation for *Imagewithtext*
- */
-type ImagewithtextSliceVariation = ImagewithtextSliceDefault;
-
-/**
- * Imagewithtext Shared Slice
- *
- * - **API ID**: `imagewithtext`
- * - **Description**: Imagewithtext
- * - **Documentation**: https://prismic.io/docs/slices
- */
-export type ImagewithtextSlice = prismic.SharedSlice<'imagewithtext', ImagewithtextSliceVariation>;
-
-/**
- * Default variation for LargeReso Slice
- *
- * - **API ID**: `default`
- * - **Description**: Default
- * - **Documentation**: https://prismic.io/docs/slices
- */
-export type LargeResoSliceDefault = prismic.SharedSliceVariation<
-	'default',
-	Record<string, never>,
-	never
->;
-
-/**
- * Slice variation for *LargeReso*
- */
-type LargeResoSliceVariation = LargeResoSliceDefault;
-
-/**
- * LargeReso Shared Slice
- *
- * - **API ID**: `large_reso`
- * - **Description**: LargeReso
- * - **Documentation**: https://prismic.io/docs/slices
- */
-export type LargeResoSlice = prismic.SharedSlice<'large_reso', LargeResoSliceVariation>;
 
 /**
  * Primary content in *PageSplit → Default → Primary*
@@ -1629,6 +1697,8 @@ declare module '@prismicio/client' {
 			PageDocumentDataSlicesSlice,
 			SettingsDocument,
 			SettingsDocumentData,
+			ShopSettingsDocument,
+			ShopSettingsDocumentData,
 			AllDocumentTypes,
 			AnnouncementsSlice,
 			AnnouncementsSliceDefaultPrimaryCardsItem,
@@ -1675,11 +1745,6 @@ declare module '@prismicio/client' {
 			ImageSliceVariation,
 			ImageSliceDefault,
 			ImageSliceBanner,
-			ImageCardsSlice,
-			ImageCardsSliceDefaultPrimaryCardsItem,
-			ImageCardsSliceDefaultPrimary,
-			ImageCardsSliceVariation,
-			ImageCardsSliceDefault,
 			ImagewithtextSlice,
 			ImagewithtextSliceDefaultPrimary,
 			ImagewithtextSliceVariation,
@@ -1687,6 +1752,11 @@ declare module '@prismicio/client' {
 			LargeResoSlice,
 			LargeResoSliceVariation,
 			LargeResoSliceDefault,
+			ImageCardsSlice,
+			ImageCardsSliceDefaultPrimaryCardsItem,
+			ImageCardsSliceDefaultPrimary,
+			ImageCardsSliceVariation,
+			ImageCardsSliceDefault,
 			PageSplitSlice,
 			PageSplitSliceDefaultPrimary,
 			PageSplitSliceVariation,
