@@ -13,7 +13,9 @@ const storesId = '\0booking-head-stores';
 const environmentId = '\0booking-head-environment';
 const prismicId = '\0booking-head-prismic';
 const previewId = '\0booking-head-preview';
+const previewMarkerId = '\0booking-head-preview-marker';
 const analyticsId = '\0booking-head-analytics';
+const navigationId = '\0booking-head-navigation';
 const wrapperId = path.join(root, '__booking-head-test-wrapper.js').replaceAll('\\', '/');
 const privateData = {
 	title: 'Private booking title sentinel',
@@ -27,7 +29,18 @@ test('the root layout keeps booking details out of head data and preserves publi
 		[storesId, "import { writable } from 'svelte/store'; export const page = writable({});"],
 		[environmentId, 'export const dev = false;'],
 		[prismicId, "export const repositoryName = 'local-fixture';"],
-		[previewId, 'export function PrismicPreview() {}'],
+		[navigationId, 'export function beforeNavigate() {}'],
+		[previewId, `export { default as PrismicPreview } from ${JSON.stringify(previewMarkerId)};`],
+		[
+			previewMarkerId,
+			compile(
+				'<svelte:head><meta name="prismic-toolbar-fixture" content="loaded" /></svelte:head>',
+				{
+					generate: 'server',
+					filename: 'preview-marker.svelte'
+				}
+			).js.code
+		],
 		[
 			analyticsId,
 			'export const injections = []; export function inject(options) { injections.push(options); }'
@@ -64,6 +77,7 @@ test('the root layout keeps booking details out of head data and preserves publi
 			resolve: {
 				alias: [
 					{ find: '$app/stores', replacement: storesId },
+					{ find: '$app/navigation', replacement: navigationId },
 					{ find: '$app/environment', replacement: environmentId },
 					{ find: '$lib/prismicio', replacement: prismicId },
 					{ find: '@prismicio/svelte/kit', replacement: previewId },
@@ -115,6 +129,7 @@ test('the root layout keeps booking details out of head data and preserves publi
 			assert.doesNotMatch(head, /rel="canonical"|og:|twitter:|application\/ld\+json/);
 			assert.doesNotMatch(head, /Private booking|private-booking-image-sentinel/);
 			assert.doesNotMatch(head, /name="description"/);
+			assert.doesNotMatch(head, /prismic-toolbar-fixture/);
 		}
 
 		await t.test('booking product, cart and encoded paths suppress all supplied SEO fields', () => {
@@ -144,6 +159,7 @@ test('the root layout keeps booking details out of head data and preserves publi
 				meta_image: { url: 'https://example.test/public-image.jpg' }
 			});
 			assert.match(result.head, /<title>Public shop title<\/title>/);
+			assert.match(result.head, /prismic-toolbar-fixture/);
 			assert.match(result.head, /rel="canonical" href="https:\/\/levelonegamepub.com\/shop"/);
 			assert.match(result.head, /property="og:title" content="Public shop social title"/);
 			assert.match(result.head, /property="og:description" content="Public shop description"/);

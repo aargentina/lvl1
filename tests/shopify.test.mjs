@@ -62,6 +62,45 @@ function mock(...responses) {
 }
 const data = (value) => ({ data: value });
 
+test('one cart read phase shares complete membership and exact product reads', async () => {
+	const other = { ...product, id: 'gid://shopify/Product/2', handle: 'other' };
+	const { client, calls } = mock(
+		data(member(['test'], more('next'))),
+		data(member(['other'])),
+		data({ product }),
+		data({ product: other }),
+		data(member(['test'])),
+		data({ product })
+	);
+	const reader = client.productReader('shop');
+	await Promise.all([reader('test'), reader('test')]);
+	await reader('other');
+	assert.equal(calls.length, 4);
+	assert.equal(calls.filter((call) => call.body.query.includes('PublicShopMembership')).length, 2);
+	assert.equal(calls.filter((call) => call.body.query.includes('query ShopProduct')).length, 2);
+	await client.productReader('shop')('test');
+	assert.equal(calls.length, 6);
+});
+
+test('a cart reader fails closed on incomplete membership and does not reuse data after a write', async () => {
+	const failed = mock(data(member(['test'], more('next'))), new Error('source failed'));
+	await assert.rejects(failed.client.productReader('shop')('test'));
+	assert.equal(failed.calls.length, 2);
+	const { client, calls } = mock(
+		data(member()),
+		data({ product }),
+		data({ cartCreate: { cart: cart(), userErrors: [], warnings: [] } }),
+		data(member([])),
+		data({ product })
+	);
+	const reader = client.productReader('shop');
+	assert.ok(await reader('test'));
+	await client.createCart(variant.id, 1);
+	assert.equal(await reader('test'), null);
+	assert.equal(calls.length, 4);
+	assert.equal(calls.at(-1).body.query.includes('PublicShopMembership'), true);
+});
+
 test('tokenless collection uses the fixed shop, Canada and no-store', async () => {
 	const { client, calls } = mock(
 		data({

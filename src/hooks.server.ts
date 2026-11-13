@@ -28,6 +28,21 @@ const redirectMap: Record<string, string> = {
 
 export const handle: Handle = async ({ event, resolve }) => {
 	const path = event.url.pathname;
+	if (
+		(event.request.method === 'GET' || event.request.method === 'HEAD') &&
+		/^\/preview\/shop(?:\/|$)/.test(path)
+	) {
+		// Prismic's client prefixes links from normal page previews. Sales routes
+		// use their own loaders, so keep the preview cookie and open that route.
+		return new Response(null, {
+			status: 307,
+			headers: {
+				Location: `${path.slice('/preview'.length)}${event.url.search}`,
+				'Cache-Control': 'private, no-store',
+				'X-Robots-Tag': 'noindex, nofollow'
+			}
+		});
+	}
 
 	// Check for exact redirects first
 	if (redirectMap[path]) {

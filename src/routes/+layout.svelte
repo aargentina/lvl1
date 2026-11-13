@@ -3,6 +3,8 @@
 
 	import { PrismicPreview } from '@prismicio/svelte/kit';
 	import { page } from '$app/stores';
+	import { beforeNavigate } from '$app/navigation';
+	import { crossesBookingBoundary } from '$lib/booking-navigation';
 	import { repositoryName } from '$lib/prismicio';
 	import Header from '$lib/components/Header.svelte';
 	import Footer from '$lib/components/Footer.svelte';
@@ -18,6 +20,13 @@
 	inject({ mode: dev ? 'development' : 'production', beforeSend: filterBookingAnalytics });
 
 	const bookingPage = $derived(isBookingPath($page.url.pathname));
+	beforeNavigate(({ from, to, willUnload, cancel }) => {
+		if (from && to && !willUnload && crossesBookingBoundary(from.url, to.url)) {
+			// A new document removes editor code loaded on an earlier public page.
+			cancel();
+			window.location.assign(to.url.href);
+		}
+	});
 
 	let { children } = $props();
 
@@ -98,4 +107,6 @@
 	<Footer />
 </div>
 
-<PrismicPreview {repositoryName} />
+{#if !bookingPage}
+	<PrismicPreview {repositoryName} />
+{/if}

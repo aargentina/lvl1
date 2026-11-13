@@ -1,4 +1,6 @@
 import type { Client } from '@prismicio/client';
+import type { Cookies } from '@sveltejs/kit';
+import { readPrismic } from './prismic-read';
 
 export type ShopSettings = {
 	heading: string;
@@ -29,13 +31,14 @@ function banner(value: unknown): ShopSettings['banner'] {
 }
 
 export async function loadShopSettings(
-	client: Pick<Client, 'getSingle'>,
-	collectionDescription: string
+	client: Pick<Client, 'getSingle' | 'disableAutoPreviews' | 'queryLatestContent'>,
+	collectionDescription: string,
+	cookies?: Pick<Cookies, 'delete'>
 ): Promise<ShopSettings> {
 	try {
-		const document = await client.getSingle('shop_settings', {
-			fetchOptions: { signal: AbortSignal.timeout(5000), cache: 'no-store' }
-		});
+		const document = await readPrismic(client, cookies, (options) =>
+			client.getSingle('shop_settings', options)
+		);
 		return {
 			heading: text(document.data.heading) || 'Shop',
 			intro: text(document.data.intro),

@@ -72,13 +72,17 @@
 					>{(selectedVariant?.price ?? data.product.priceRange.minVariantPrice).currencyCode}</span
 				>
 			</p>
-			{#if !canAdd}
-				<p
-					class="mt-5 inline-block rounded bg-ivory px-3 py-1 text-sm font-black uppercase tracking-wider text-ink"
-				>
-					Sold out
-				</p>
-			{/if}
+			<div role="status" aria-live="polite" aria-atomic="true">
+				{#if !canAdd}
+					<p
+						class="mt-5 inline-block rounded bg-ivory px-3 py-1 text-sm font-black uppercase tracking-wider text-ink"
+					>
+						Sold out
+					</p>
+				{:else if data.product.variants.length > 1}
+					<p class="sr-only">{selectedVariant?.title} is available.</p>
+				{/if}
+			</div>
 			{#if data.product.description}
 				<p class="text-chalk/80 mt-7 whitespace-pre-line leading-7">{data.product.description}</p>
 			{/if}

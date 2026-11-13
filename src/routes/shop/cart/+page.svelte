@@ -4,4 +4,6 @@
 	let { data, form }: { data: PageData; form: ActionData } = $props();
 </script>
 
+<svelte:head><meta name="robots" content="noindex, nofollow" /></svelte:head>
+
 <ShopCartView {data} {form} scope="shop" />

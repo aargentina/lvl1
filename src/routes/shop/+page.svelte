@@ -21,7 +21,7 @@
 	{#if data.shopSettings.banner}
 		<img
 			src={data.shopSettings.banner.url}
-			alt={data.shopSettings.banner.alt}
+			alt=""
 			class="absolute inset-0 h-full w-full object-cover opacity-10"
 		/>
 	{/if}
@@ -141,6 +141,11 @@
 	{:else}
 		<div class="border-chalk/15 rounded-xl border px-6 py-12 text-center">
 			<p class="text-lg">There are no items in the shop at this time.</p>
+			<a
+				href="/shop"
+				class="mr-6 mt-5 inline-flex min-h-11 items-center font-black underline underline-offset-4"
+				>First items</a
+			>
 			<a
 				href="/events"
 				class="mt-5 inline-flex min-h-11 items-center font-black underline underline-offset-4"

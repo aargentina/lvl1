@@ -7,6 +7,7 @@ import { shopRoot, type ShopCart, type ShopScope } from '$lib/shop';
 const CART_COOKIE = 'level_one_shop_cart';
 const NOTICE_COOKIE = 'level_one_shop_notice';
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 10;
+const BOOKING_RETURN_COOKIE = 'level_one_booking_return';
 
 function cartCookie(scope: ShopScope) {
 	return scope === 'booking' ? 'level_one_booking_cart' : CART_COOKIE;
@@ -80,6 +81,26 @@ export function takeShopNotice(cookies: Cookies, scope: ShopScope = 'shop') {
 	return notice;
 }
 
+export function bookingReturnHandle(cookies: Cookies) {
+	const handle = cookies.get(BOOKING_RETURN_COOKIE);
+	return handle && /^[a-z0-9][a-z0-9-]{0,254}$/.test(handle) ? handle : null;
+}
+
+export function saveBookingReturn(event: RequestEvent, handle: string) {
+	if (!/^[a-z0-9][a-z0-9-]{0,254}$/.test(handle)) return;
+	event.cookies.set(BOOKING_RETURN_COOKIE, handle, {
+		path: '/bookings',
+		httpOnly: true,
+		secure: event.url.protocol === 'https:',
+		sameSite: 'lax',
+		maxAge: 3600
+	});
+}
+
+export function forgetBookingReturn(cookies: Cookies) {
+	cookies.delete(BOOKING_RETURN_COOKIE, { path: '/bookings' });
+}
+
 export function formText(data: FormData, key: string, maxLength = 200) {
 	const value = data.get(key);
 	return typeof value === 'string' && value.length <= maxLength ? value : '';
@@ -91,14 +112,25 @@ export function shopQuantity(data: FormData) {
 	return Number(value);
 }
 
+export function cartQuantityLimitExceeded(cart: ShopCart) {
+	const quantities = new Map<string, number>();
+	for (const line of cart.lines) {
+		const quantity = (quantities.get(line.variant.id) ?? 0) + line.quantity;
+		if (quantity > 99) return true;
+		quantities.set(line.variant.id, quantity);
+	}
+	return false;
+}
+
 export async function cartCanCheckout(
 	client: ShopifyStorefront,
 	cart: ShopCart,
-	scope: ShopScope = 'shop'
+	scope: ShopScope = 'shop',
+	readProduct = client.productReader(scope)
 ) {
-	if (!cart.lines.length || !cart.totalQuantity) return false;
+	if (!cart.lines.length || !cart.totalQuantity || cartQuantityLimitExceeded(cart)) return false;
 	for (const line of cart.lines) {
-		const product = await saleProduct(client, line.variant.product.handle, scope);
+		const product = await readProduct(line.variant.product.handle);
 		const variant = product?.variants.find((candidate) => candidate.id === line.variant.id);
 		if (!variant?.availableForSale) return false;
 	}

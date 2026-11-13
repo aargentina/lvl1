@@ -7,6 +7,7 @@ import type {
 	ShopPageInfo,
 	ShopProduct,
 	ShopProductSummary,
+	ShopScope,
 	ShopVariant
 } from '../shop.ts';
 
@@ -181,6 +182,7 @@ function nextCursor(info: ShopPageInfo, seen: Set<string>): string | null {
 export class ShopifyStorefront {
 	private fetcher: typeof fetch;
 	private buyerIp?: string;
+	private writeVersion = 0;
 	constructor(fetcher: typeof fetch, buyerIp?: string) {
 		this.fetcher = fetcher;
 		this.buyerIp = buyerIp;
@@ -249,6 +251,50 @@ export class ShopifyStorefront {
 			if (!after) return false;
 		}
 		invalid();
+	}
+
+	productReader(scope: ShopScope) {
+		let membership: Promise<Set<string>> | undefined;
+		let readVersion = this.writeVersion;
+		const products = new Map<string, Promise<ShopProduct | null>>();
+		const readMembership = async () => {
+			const handles = new Set<string>(),
+				seen = new Set<string>();
+			let after: string | null = null;
+			for (let index = 0; index < MAX_COLLECTION_PAGES; index++) {
+				const data = await this.request(
+					`query PublicShopMembership($handle: String!, $after: String) @inContext(country: CA, language: EN) {
+				 collection(handle: $handle) { products(first: 100, after: $after) { pageInfo { hasNextPage endCursor } nodes { handle } } } }`,
+					{ handle: PUBLIC_SHOP_HANDLE, after }
+				);
+				const pageData = object(object(data.collection).products);
+				for (const row of array(pageData.nodes)) handles.add(nonempty(object(row).handle));
+				after = nextCursor(page(pageData.pageInfo), seen);
+				if (!after) return handles;
+			}
+			invalid();
+		};
+		// This reader belongs to one check. Never retain it across a cart write.
+		return (handle: string): Promise<ShopProduct | null> => {
+			if (readVersion !== this.writeVersion) {
+				membership = undefined;
+				products.clear();
+				readVersion = this.writeVersion;
+			}
+			if (!/^[a-z0-9][a-z0-9-]{0,254}$/.test(handle)) return Promise.resolve(null);
+			if (!products.has(handle)) {
+				products.set(
+					handle,
+					(async () => {
+						membership ??= readMembership();
+						const isPublic = (await membership).has(handle);
+						if (isPublic !== (scope === 'shop')) return null;
+						return this.readProduct(handle);
+					})()
+				);
+			}
+			return products.get(handle)!;
+		};
 	}
 
 	async product(handle: string): Promise<ShopProduct | null> {
@@ -344,6 +390,8 @@ export class ShopifyStorefront {
 		variables: Record<string, unknown>,
 		creating = false
 	): Promise<CartResult> {
+		// A lost write response can still mean that Shopify changed the cart.
+		this.writeVersion++;
 		const data = await this.request(
 			`mutation ShopCartWrite(${declarations}, $after: String) { ${operation}(${argumentsText}) {
 		 cart { ${CART} } userErrors { message } warnings { message } } }`,

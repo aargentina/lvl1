@@ -2,13 +2,17 @@ import { error, fail, redirect, type RequestEvent } from '@sveltejs/kit';
 import { shopRoot, type ShopScope } from '$lib/shop';
 import {
 	cartCanCheckout,
+	cartQuantityLimitExceeded,
+	bookingReturnHandle,
 	cartId,
 	forgetCart,
+	forgetBookingReturn,
 	formText,
 	privateShopPage,
 	requireShopOrigin,
 	saleProduct,
 	saveCart,
+	saveBookingReturn,
 	saveShopNotice,
 	shopClient,
 	shopQuantity,
@@ -24,7 +28,10 @@ export async function loadSaleProduct(event: RequestEvent, scope: ShopScope = 's
 		error(503, 'This product is not available. Please try again shortly.');
 	}
 	if (!product) error(404, 'This item is not available here.');
-	if (scope === 'booking') return { product, title: 'Reservation booking | Level One Game Pub' };
+	if (scope === 'booking') {
+		saveBookingReturn(event, product.handle);
+		return { product, title: 'Reservation booking | Level One Game Pub' };
+	}
 	return {
 		product,
 		title: `${product.title} | Level One Shop`,
@@ -49,9 +56,19 @@ export async function addSaleProduct(event: RequestEvent, scope: ShopScope = 'sh
 		if (!variant) return fail(404, { message: 'This item is not available here.' });
 		if (!variant.availableForSale) return fail(409, { message: 'This item is sold out.' });
 		let id = cartId(event.cookies, scope);
-		if (id && !(await client.cart(id))) {
+		const existingCart = id ? await client.cart(id) : null;
+		if (id && !existingCart) {
 			forgetCart(event.cookies, scope);
 			id = null;
+		}
+		const existingQuantity =
+			existingCart?.lines
+				.filter((line) => line.variant.id === variantId)
+				.reduce((sum, line) => sum + line.quantity, 0) ?? 0;
+		if (existingQuantity + quantity > 99) {
+			return fail(409, {
+				message: 'A cart can have at most 99 of this option. Open the cart to change its quantity.'
+			});
 		}
 		const result = id
 			? await client.addLines(id, variantId, quantity)
@@ -61,6 +78,7 @@ export async function addSaleProduct(event: RequestEvent, scope: ShopScope = 'sh
 			return fail(409, { message: result.userErrors.join(' ').slice(0, 600) });
 		}
 		if (!result.cart) return fail(502, { message: 'The cart did not update. Please try again.' });
+		if (scope === 'booking') saveBookingReturn(event, product!.handle);
 		saveShopNotice(
 			event,
 			result.warnings.length
@@ -84,10 +102,39 @@ export async function loadSaleCart(event: RequestEvent, scope: ShopScope = 'shop
 		const client = shopClient(event);
 		const cart = id ? await client.cart(id) : null;
 		if (id && !cart) forgetCart(event.cookies, scope);
-		const checkoutBlocked = cart ? !(await cartCanCheckout(client, cart, scope)) : true;
+		const readProduct = client.productReader(scope);
+		let checkoutBlocked = true,
+			checkoutMessage: string | null = null;
+		try {
+			checkoutBlocked = cart ? !(await cartCanCheckout(client, cart, scope, readProduct)) : true;
+			if (cart && cartQuantityLimitExceeded(cart)) {
+				checkoutMessage = 'Set each option to 99 or fewer before checkout.';
+			}
+		} catch {
+			checkoutMessage =
+				'Stock could not be checked. You can remove items, or reload the cart before checkout.';
+		}
+		let returnHandle: string | null = null;
+		if (scope === 'booking') {
+			const savedHandle = bookingReturnHandle(event.cookies);
+			const handle = savedHandle ?? cart?.lines[0]?.variant.product.handle;
+			if (handle) {
+				try {
+					const product = await readProduct(handle);
+					if (product) {
+						returnHandle = product.handle;
+						if (!savedHandle) saveBookingReturn(event, product.handle);
+					} else if (savedHandle) forgetBookingReturn(event.cookies);
+				} catch {
+					// Keep the saved hint on a failed read, but expose no unchecked link.
+				}
+			}
+		}
 		return {
 			cart,
 			checkoutBlocked,
+			checkoutMessage,
+			returnHandle,
 			notice: takeShopNotice(event.cookies, scope),
 			title: scope === 'booking' ? 'Booking cart | Level One Game Pub' : 'Cart | Level One Shop',
 			...(scope === 'shop' ? { meta_description: 'Check your Level One shop cart.' } : {})

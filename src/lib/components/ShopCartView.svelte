@@ -9,15 +9,21 @@
 		form,
 		scope = 'shop'
 	}: {
-		data: { cart: ShopCart | null; notice: string | null; checkoutBlocked: boolean };
+		data: {
+			cart: ShopCart | null;
+			notice: string | null;
+			checkoutBlocked: boolean;
+			checkoutMessage?: string | null;
+			returnHandle?: string | null;
+		};
 		form?: { message?: string } | null;
 		scope?: ShopScope;
 	} = $props();
 	const root = $derived(shopRoot(scope));
 	const continueHref = $derived(
 		scope === 'booking'
-			? data.cart?.lines[0]
-				? `${root}/${encodeURIComponent(data.cart.lines[0].variant.product.handle)}`
+			? data.returnHandle
+				? `${root}/${encodeURIComponent(data.returnHandle)}`
 				: '/contact'
 			: '/shop'
 	);
@@ -58,7 +64,7 @@
 			href={continueHref}
 			class="inline-flex min-h-11 items-center text-sm font-black underline underline-offset-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-chalk"
 			>{scope === 'booking'
-				? hasItems
+				? data.returnHandle
 					? 'Back to booking →'
 					: 'Contact us →'
 				: 'Continue shopping →'}</a
@@ -138,7 +144,7 @@
 											min="1"
 											max="99"
 											step="1"
-											value={line.quantity}
+											value={Math.min(line.quantity, 99)}
 											required
 											disabled={pending}
 											class="border-chalk/50 min-h-11 w-20 rounded border bg-ink px-3 text-chalk focus:border-chalk focus:ring-chalk disabled:opacity-50"
@@ -161,6 +167,11 @@
 									>
 								</form>
 							</div>
+							{#if line.quantity > 99}
+								<p role="status" class="mt-3 text-sm">
+									This cart has {line.quantity} of this option. Set its quantity to 99 or fewer.
+								</p>
+							{/if}
 						</div>
 					</article>
 				{/each}
@@ -180,8 +191,8 @@
 					Final tax and delivery costs are calculated at checkout.
 				</p>
 				{#if data.checkoutBlocked}
-					<p class="mt-5 text-sm leading-6">
-						An item is no longer available. Remove it before checkout.
+					<p role="status" class="mt-5 text-sm leading-6">
+						{data.checkoutMessage || 'An item is no longer available. Remove it before checkout.'}
 					</p>
 				{/if}
 				<form method="POST" action="?/checkout" class="mt-6">
@@ -198,12 +209,18 @@
 		<div class="border-chalk/15 rounded-xl border px-6 py-14 text-center">
 			<p class="text-xl">Your cart is empty.</p>
 			{#if scope === 'booking'}<p class="mt-4">
-					Open the booking link we sent you to add your reservation.
+					{data.returnHandle
+						? 'Return to your booking to add your reservation.'
+						: 'Open the booking link we sent you to add your reservation.'}
 				</p>{/if}
 			<a
 				href={continueHref}
 				class="mt-7 inline-flex min-h-12 items-center justify-center rounded bg-gradient-to-r from-red to-red-bright px-7 py-3 font-heading text-base hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-chalk"
-				>{scope === 'booking' ? 'Contact us' : 'Go to shop'}</a
+				>{scope === 'booking'
+					? data.returnHandle
+						? 'Back to booking'
+						: 'Contact us'
+					: 'Go to shop'}</a
 			>
 		</div>
 	{/if}

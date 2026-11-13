@@ -1,12 +1,15 @@
 import { asText } from '@prismicio/client';
 import { createClient } from '$lib/prismicio';
+import { readPrismic } from '$lib/server/prismic-read';
 
 export const prerender = 'auto';
 
 export async function load({ fetch, cookies }) {
 	const client = createClient({ fetch, cookies });
 
-	const page = await client.getByUID('page', 'food');
+	const page = await readPrismic(client, cookies, (options) =>
+		client.getByUID('page', 'food', options)
+	);
 
 	return {
 		page,

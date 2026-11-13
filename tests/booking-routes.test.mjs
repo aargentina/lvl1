@@ -276,8 +276,88 @@ test('booking cart reads only its cookie, consumes only its notice and omits its
 	assert.equal(input.values.get(publicNotice), 'Public cart notice.');
 	assert.equal(input.values.get(publicCookie), publicCartId);
 	assert.deepEqual(input.writes, [
+		{
+			name: 'level_one_booking_return',
+			value: 'private-booking',
+			settings: { path: '/bookings', httpOnly: true, secure: true, sameSite: 'lax', maxAge: 3600 }
+		},
 		{ name: bookingNotice, deleted: true, settings: { path: '/bookings' } }
 	]);
+});
+
+test('a validated booking is remembered and can be opened again after the cart is empty', async () => {
+	const page = event({ responses: [data(membership()), data({ product: product() })] });
+	await productRoute.load(page);
+	const hint = page.writes.find((write) => write.name === 'level_one_booking_return');
+	assert.equal(hint.value, 'private-booking');
+	assert.deepEqual(hint.settings, {
+		path: '/bookings',
+		httpOnly: true,
+		secure: true,
+		sameSite: 'lax',
+		maxAge: 3600
+	});
+	const empty = event({
+		path: '/bookings/cart',
+		cookies: { level_one_booking_return: hint.value },
+		responses: [data(membership()), data({ product: product() })]
+	});
+	const result = await cartRoute.load(empty);
+	assert.equal(result.cart, null);
+	assert.equal(result.returnHandle, 'private-booking');
+	assert.equal(result.checkoutBlocked, true);
+	assert.equal(empty.calls.length, 2);
+	const publicInput = event({
+		path: '/shop/cart',
+		cookies: { level_one_booking_return: hint.value }
+	});
+	assert.equal((await publicCartRoute.load(publicInput)).returnHandle, null);
+	assert.equal(publicInput.calls.length, 0);
+});
+
+test('unchecked or now-public booking hints cannot become return links', async () => {
+	for (const handle of ['../private-booking', 'https://other.test', 'UPPERCASE']) {
+		const input = event({ path: '/bookings/cart', cookies: { level_one_booking_return: handle } });
+		assert.equal((await cartRoute.load(input)).returnHandle, null);
+		assert.equal(input.calls.length, 0);
+	}
+	for (const response of [data(membership(['private-booking'])), new Error('source unavailable')]) {
+		const input = event({
+			path: '/bookings/cart',
+			cookies: { level_one_booking_return: 'private-booking' },
+			responses: [response]
+		});
+		assert.equal((await cartRoute.load(input)).returnHandle, null);
+		assert.equal(input.calls.length, 1);
+		if (response instanceof Error)
+			assert.equal(input.values.get('level_one_booking_return'), 'private-booking');
+		else assert.equal(input.values.has('level_one_booking_return'), false);
+	}
+});
+
+test('a failed booking stock recheck keeps the cart visible and removable', async () => {
+	const input = event({
+		path: '/bookings/cart',
+		cookies: { [bookingCookie]: bookingCartId },
+		responses: [data({ cart: cart() }), new Error('membership unavailable')]
+	});
+	const result = await cartRoute.load(input);
+	assert.equal(result.cart.totalQuantity, 1);
+	assert.equal(result.checkoutBlocked, true);
+	assert.match(result.checkoutMessage, /Stock could not be checked/);
+	assert.equal(result.returnHandle, null);
+	assert.equal(input.calls.length, 2);
+	const remove = event({
+		path: '/bookings/cart',
+		fields: { lineId },
+		cookies: { [bookingCookie]: bookingCartId },
+		responses: [
+			data({ cart: cart() }),
+			data({ cartLinesRemove: { cart: cart(0), userErrors: [], warnings: [] } })
+		]
+	});
+	await assert.rejects(cartRoute.actions.remove(remove), isCartRedirect);
+	assert.equal(remove.calls.length, 2);
 });
 
 test('a Public shop product cannot open or be added through a booking URL', async () => {

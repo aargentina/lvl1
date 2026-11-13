@@ -4,6 +4,7 @@ import { createServer as createHttpServer } from 'node:http';
 import { after, before, test } from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { createServer } from 'vite';
+import { PreviewTokenExpiredError } from '@prismicio/client';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const previewSdkModule = '\0shop-settings-preview-sdk';
@@ -135,6 +136,33 @@ test('an existing document can hide its intro, banner and notice', async () => {
 		),
 		{ heading: 'Shop', intro: '', banner: null, notice: '' }
 	);
+});
+
+test('expired settings preview reads published settings and clears only its preview cookie', async () => {
+	let published = false;
+	const deletes = [],
+		requests = [];
+	const source = {
+		disableAutoPreviews() {},
+		queryLatestContent() {
+			published = true;
+		},
+		async getSingle(type, options) {
+			requests.push({ type, options });
+			if (!published) throw new PreviewTokenExpiredError('Expired local fixture', undefined, {});
+			return {
+				data: { heading: 'Published shop', intro: 'Published intro', banner: {}, notice: '' }
+			};
+		}
+	};
+	const result = await loadShopSettings(source, 'Old fallback', {
+		delete: (name, options) => deletes.push({ name, options })
+	});
+	assert.equal(result.heading, 'Published shop');
+	assert.equal(result.intro, 'Published intro');
+	assert.equal(requests.length, 2);
+	assert.equal(requests[0].options.fetchOptions.signal, requests[1].options.fetchOptions.signal);
+	assert.deepEqual(deletes, [{ name: 'io.prismic.preview', options: { path: '/' } }]);
 });
 
 test('plain text survives the loader for safe rendering by Svelte', async () => {

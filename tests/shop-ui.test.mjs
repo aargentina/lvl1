@@ -120,7 +120,16 @@ test('shop pages render current sale data and safe purchase states', async (t) =
 			render(Booking, { props: { data: { product: value }, form } }).body;
 		const renderBookingCart = (value, extra = {}, form = null) =>
 			render(BookingCart, {
-				props: { data: { cart: value, notice: null, checkoutBlocked: false, ...extra }, form }
+				props: {
+					data: {
+						cart: value,
+						notice: null,
+						checkoutBlocked: false,
+						returnHandle: value?.lines[0]?.variant.product.handle ?? null,
+						...extra
+					},
+					form
+				}
 			}).body;
 
 		await t.test(
@@ -141,7 +150,8 @@ test('shop pages render current sale data and safe purchase states', async (t) =
 				assert.match(html, /<h1\b[^>]*>Games and events<\/h1>/);
 				assert.match(html, /Find your next game\.\nBook an event\./);
 				assert.match(html, /src="https:\/\/images\.prismic\.io\/lvl1\/shop-banner-fixture\.jpg"/);
-				assert.match(html, /alt="Games at Level One"/);
+				assert.match(html, /alt=""/);
+				assert.doesNotMatch(html, /alt="Games at Level One"/);
 				assert.match(html, /Event tickets cannot be returned\./);
 				assert.doesNotMatch(html, /Items selected for public sale\./);
 				assert.match(html, /href="\/shop\/test"/);
@@ -219,6 +229,59 @@ test('shop pages render current sale data and safe purchase states', async (t) =
 				buttons(html).find((button) => button.includes('Sold out')),
 				/\sdisabled(?:\s|=|>)/
 			);
+		});
+
+		await t.test('availability changes have a persistent polite status region', () => {
+			for (const available of [false, true]) {
+				const html = renderProduct(
+					product({
+						availableForSale: available,
+						variants: [
+							variant({ availableForSale: available, title: 'Evening' }),
+							variant({ id: 'gid://shopify/ProductVariant/9', title: 'Morning' })
+						]
+					})
+				);
+				assert.match(html, /role="status"[^>]*aria-live="polite"[^>]*aria-atomic="true"/);
+				assert.match(html, available ? /Evening is available/ : /Sold out/);
+			}
+		});
+
+		await t.test('the public cart is noindex while the booking cart head stays separate', () => {
+			const props = { data: { cart: null, notice: null, checkoutBlocked: true }, form: null };
+			assert.match(render(Cart, { props }).head, /name="robots" content="noindex, nofollow"/);
+			assert.equal(render(BookingCart, { props }).head, '');
+		});
+
+		await t.test('an empty booking cart can return to its revalidated booking', () => {
+			const html = renderBookingCart(null, { returnHandle: 'private-booking' });
+			assert.match(html, /href="\/bookings\/private-booking"/);
+			assert.match(html, /Back to booking/);
+			assert.doesNotMatch(html, /Open the booking link we sent you/);
+			assert.equal(formByAction(html, 'checkout'), undefined);
+		});
+
+		await t.test(
+			'a temporary stock failure keeps removal and shows a temporary checkout reason',
+			() => {
+				const html = renderBookingCart(cart(), {
+					checkoutBlocked: true,
+					checkoutMessage: 'Stock could not be checked. Reload the cart.'
+				});
+				assert.match(html, /Stock could not be checked/);
+				assert.ok(formByAction(html, 'remove'));
+				assert.match(formByAction(html, 'checkout'), /<button\b[^>]*\sdisabled(?:\s|=|>)/);
+				assert.doesNotMatch(html, /An item is no longer available/);
+			}
+		);
+
+		await t.test('an old large cart line can be reduced within the form limit', () => {
+			const value = cart();
+			value.lines[0].quantity = 120;
+			const html = renderCart(value, { checkoutBlocked: true });
+			assert.match(html, /This cart has 120 of this option/);
+			assert.match(formByAction(html, 'update'), /max="99"[^>]*value="99"/);
+			assert.ok(formByAction(html, 'remove'));
 		});
 
 		await t.test('sold-out Test stays visible and cannot be added', () => {

@@ -68,11 +68,22 @@ document. Publish the document to use the changes on the next shop request.
 Products, prices and stock stay in Shopify. This connection needs the website
 release before it changes the live shop.
 
+For a physical item, keep **Physical product** on and check its shipping settings.
+For an event ticket, reservation or deposit with no shipment, turn **Physical
+product** off. A private product also needs **Unlisted** status, Online Store
+publication and no membership in **Public shop**. These settings keep its link
+available without adding it to the public shop.
+
 For a booking or deposit outside Public shop, use `/bookings/<product-handle>`.
 It uses the main site's design and a separate booking cart. These pages have
 no public listing or sitemap entry and ask search engines not to index them.
 Anyone with the direct link can open them. Existing Shopify product links keep
 working; the new main-site links need the website release before they are sent.
+
+The Prismic Shop settings release was published on November 13, 2026. Test is
+Unlisted and outside Public shop. Use `/bookings/test` for its private preview;
+`/shop/test` must return 404. Public shop contains the two Blood on the Clocktower
+event products. Brandon will merge the complete website PR after its checks pass.
 
 ## Live menu availability
 

@@ -32,23 +32,46 @@ An existing document with blank optional fields hides those fields. Text is
 rendered as plain text, and banners must use HTTPS on a Prismic image host.
 
 Setup on November 13, 2026: the live repository `lvl1` has the four-field
-single model. A new **Shop settings** document is saved in the pending release
-**Shop settings — 2026-11-13** (`avdwAhEAAMIEQly5`). It has heading `Shop`, intro
-`Shop items from Level One Game Pub.`, the original games background copied to
-Prismic's media library, and a blank notice. The release is not published.
-Its real Prismic preview opened the local shop and used that Prismic image.
-No payment or product change was needed for this check.
+single model. The **Shop settings — 2026-11-13** release
+(`avdwAhEAAMIEQly5`) was published at 15:21 ET that day. Its published document
+has heading `Shop`, intro `Shop items from Level One Game Pub.`, the original
+games background copied to Prismic's media library, and a blank notice.
+The four published fields were read back. Its real Prismic preview also opened
+the local shop and used that Prismic image. No payment or product change was
+needed for those checks. Publishing this data did not release the website code.
 
 The website's existing preview endpoint adds `/preview` to resolved routes.
 For the exact Shop settings destination `/preview/shop`, it now returns `/shop`
 and keeps the SDK's preview cookie and response headers. Other page previews
 keep their existing destinations. After Brandon merges the website change,
-publish the settings release and check all four fields on the live shop.
+check all four published fields on the live shop.
+
+An author can also reach Shop from another Prismic page preview. GET and HEAD
+requests under `/preview/shop` return to the matching `/shop` path with the query
+kept. Normal Prismic page previews and form writes keep their existing routes.
+The redirect uses private caching and no-index instructions.
+
+An old Prismic preview link can expire before its callback opens. For that
+specific SDK expiry error, the preview endpoint clears only the preview cookie
+and returns to the published home page. It does not retry the expired token or
+use a return address from the request. A valid preview callback keeps its
+existing behavior. Other callback failures still report an error.
+
+Prismic document reads have a five-second limit. A valid preview stays active.
+When the SDK reports that its preview token has expired, the server clears only
+the Prismic preview cookie, switches to published content and tries the read
+once more under the same time limit. Other errors do not clear the cookie or
+cause a preview retry. If the navigation read fails or returns invalid data,
+the main menu uses fixed site links so a shop or booking page can still open.
+A normal content page still needs its own Prismic content to render.
 
 ## Add an item for public sale
 
 1. Create or edit the product in Shopify.
 2. Set the title, description, images, price and stock. Check tax and delivery settings.
+   For an item to be shipped, keep **Physical product** on and set its shipping
+   details. For a ticket, reservation or deposit with no shipment, turn
+   **Physical product** off so checkout does not ask for shipping.
 3. Set the product to Active and make it available on the Online Store channel.
 4. Add it to the **Public shop** collection. The collection handle is `public-shop`.
 
@@ -56,6 +79,10 @@ The collection is manual. A product must be added to it before the main site's
 shop lists it. A product outside the collection cannot be opened or added to a
 cart through the main site's shop routes. This rule does not make other Shopify
 product links private.
+
+An invalid, overlong or exhausted next-page link returns to `/shop`. A failed
+first-page read still shows the shop-unavailable page. This keeps an old page
+link from looking like a complete shop outage.
 
 Product and stock changes are read on the next page request. No site rebuild is
 needed. The shop does not retain a product snapshot in a cache. A sold-out item
@@ -66,6 +93,19 @@ returned quantity and any warning.
 
 Keep party deposits, private event payments and other direct-link items outside
 this collection. The existing Toast gift card link stays in the main navigation.
+
+## Add event tickets
+
+Use the public-item steps for an event that anyone can book. Create a separate
+product for each event date when its price, capacity or terms differ. Put the
+date, arrival time, start time, requirements and cancellation terms in its
+description. Turn **Physical product** off when no item is shipped.
+
+To limit sales to the event capacity, turn inventory tracking on, set the
+available quantity and keep **Continue selling when out of stock** off. Check
+the inventory location that fulfils online sales. A product with no available
+stock stays visible as **Sold out**. This site does not end sales when an event
+date passes. Set an old event to Draft or Archived to stop sales.
 
 ## Booking pages by direct link
 
@@ -85,12 +125,27 @@ collection before it reads a booking by its exact handle. A public product
 cannot open through the booking route. A missing, unpublished or unavailable
 source is not used as proof that a product is a private booking.
 
-An available Shopify product outside Public shop can use this direct-link route.
-No extra tag or collection is needed. To hide its original Shopify page from
-Shopify search, listings and the Shopify sitemap, set the product status to
-**Unlisted**. Keep the Online Store publication required for its direct product
-page and checkout. Unlisted products can be read by exact handle through the
-Storefront API. This work does not change existing booking product statuses.
+Create a private reservation or deposit as follows:
+
+1. Create or edit the product in Shopify. Set its title, description, image,
+   price and available quantity. Check its tax settings.
+2. Turn **Physical product** off when no item is shipped. This keeps shipping
+   fields out of checkout for a cart that contains only non-physical items.
+3. Set its status to **Unlisted** and keep it published to **Online Store**.
+4. Keep it outside **Public shop**. No extra tag or booking collection is needed.
+5. Copy its URL handle from **Search engine listing** and put it after
+   `https://www.levelonegamepub.com/bookings/`. Keep the handle unchanged after
+   the link is sent.
+
+Unlisted status hides the original Shopify page from Shopify search, listings
+and the Shopify sitemap. Its direct product page and checkout remain available.
+Unlisted products can be read by exact handle through the Storefront API.
+An available product outside Public shop can use the main-site direct-link
+route. This rule does not make a booking password-protected.
+
+Set a product to Draft or Archived to stop sales. Removing it from Public shop
+alone does not stop its direct-link sale. Existing booking product settings
+were kept unchanged, except for the owner-requested Test changes recorded below.
 
 Booking pages and their data, errors and action responses use private, no-store
 caching and `X-Robots-Tag: noindex, nofollow, nosnippet, noimageindex`. Their HTML
@@ -100,6 +155,13 @@ uses `Referrer-Policy: strict-origin`. This sends only the site origin, with no
 booking path or query, and preserves the Origin header for native form POSTs.
 Do not use `no-referrer` here: it makes native POST origins null and blocks
 checkout before the application handler runs.
+
+The Prismic editor toolbar is not loaded on booking pages. Normal content and
+shop pages keep it for author previews. The public cart also has no-index
+instructions; its cache setting alone does not stop search indexing.
+Navigation between a normal page and the booking area loads a new document.
+This keeps an editor script loaded on a normal page from staying active on a
+later booking page. Navigation within one area can still use the site router.
 
 These headers apply to responses handled by the application. SvelteKit rejects
 cross-origin form posts before this hook runs. That generic HTTP 403 has no
@@ -114,6 +176,13 @@ the public cart. Booking cart updates and checkout recheck that each product is
 still outside Public shop and that its selected variant is available. Moving
 an item between the two flows blocks the old cart's checkout until that item
 is removed. Checkout still uses Shopify on `checkout.levelonegamepub.com`.
+
+After a validated booking opens or is added, a separate HttpOnly cookie keeps
+its handle for one hour at `/bookings`. The empty booking cart can then show a
+return link. The server checks that the product is still available through the
+private flow before it sends that link. A product moved into Public shop or a
+missing product clears the saved handle. A failed source read keeps the saved
+handle but sends no unchecked link. The cookie does not change a public cart.
 
 ## Routes and data
 
@@ -130,13 +199,17 @@ is removed. Checkout still uses Shopify on `checkout.levelonegamepub.com`.
 Shopify requests use the fixed store `levelonegamepub.myshopify.com` and
 Storefront API version `2026-10`. Basic products, collections and cart requests
 use tokenless access. No Admin API key or new persistent access was created.
-The live read of `public-shop` and `test` was checked on November 11, 2026.
+The public collection and private Test route were checked on November 13, 2026.
 Review the API version before Shopify retires it.
 
 Descriptions use escaped plain text. Failed, incomplete or malformed reads
 produce an unavailable state. The code does not fall back to all Shopify
 products. Page reads have a ten-second request limit. Membership, variant and
 cart reads have fixed page limits and reject incomplete results.
+
+Cart checks reuse one complete collection-membership read and one product read
+per handle within that request. They keep no product cache across requests.
+A cart write attempt invalidates any earlier read results for that request.
 
 ## Cart and checkout
 
@@ -149,6 +222,16 @@ SvelteKit form actions keep the normal origin checks. The actions also require
 an exact Origin match. Line changes must refer to the current cookie's cart.
 An uncertain write is not repeated automatically. The page tells the buyer to
 check the cart before another attempt.
+
+If a cart can be read but its product or membership check fails, the cart stays
+visible with a temporary warning. Checkout stays blocked until a fresh check
+passes. The buyer can still remove an item. A failed cart read itself still
+shows an unavailable page.
+
+Each variant can have at most 99 units in the cart. Adding the same variant
+again checks its existing total before the write. An older cart above that
+limit stays removable and can be reduced to a permitted quantity; it cannot
+check out while its total is above the limit.
 
 Checkout checks current collection membership and variant availability for all
 cart lines. It then reads a fresh Shopify checkout URL. The URL must use HTTPS,
@@ -268,8 +351,9 @@ On this Windows host, Vercel's adapter could compile and prerender but could not
 make its function symlinks. A separate Linux Node 24.18.0 build under
 `S:/Scratch/level-one-website-shop-20261111` checks the same complete source and
 lockfile without a Windows permission change. Keep the final build receipt in
-the local review output. The final local build passed before these live-setting
-records were added to this guide. No application source changed after that build.
+the local review output. Keep a source hash manifest with the build receipt.
+Run the final build after the complete local change set is ready. A passed
+older build does not cover later source changes.
 
 ## Release and review
 
@@ -287,19 +371,27 @@ Before merge, check the latest source main, the complete diff, local results and
 any required GitHub or Vercel checks. After Brandon merges, use one check session:
 
 1. Verify the Git-triggered production deployment for the newest source main.
-   Check `/shop`, `/shop/test` and the empty cart. Test must show $100 CAD, and its
-   buy state must match the current Shopify stock. Check the phone layout.
-2. Check that a direct main-site product URL outside Public shop is excluded.
-   Check that its original Shopify product form and Shopify cart still work.
-3. Use the approved Test flow to add one, update to two, follow the native
-   checkout redirect and remove the cart item. Confirm HTTPS on
+   Check `/shop`, both Blood on the Clocktower event pages, the public cart and
+   the phone layout. The public shop must list the two event products and omit
+   Test. `/shop/test` must return 404. Do not add a real event ticket for this
+   Test check.
+2. Check the published Prismic heading, intro, banner and hidden blank notice.
+   Check a normal content preview and its Shop navigation. Check that an expired
+   preview can return to published content without a page error.
+3. Open `/bookings/test`. It must show $100 CAD and current availability. Check
+   its generic page metadata, no-index/no-store headers and public shop/sitemap
+   exclusion. Check that its original Shopify product link still works.
+4. Use the private Test flow to add one, update to two, follow the native checkout
+   redirect and remove only the Test cart item. Confirm HTTPS on
    `checkout.levelonegamepub.com` and that the cart key is absent from page data.
-   Do not enter personal information, make a payment or submit an order.
-4. Check the three new menu links in the draft theme after their main-site
+   A cart with only this non-physical reservation must not ask for delivery or
+   shipping. Do not enter personal information, make a payment or submit an order.
+5. Check the three new menu links in the draft theme after their main-site
    routes are live. Keep the draft unpublished until these checks pass. Record
    any later theme publication and verify the active theme and return links.
 
-The live collection was created with Test as its only item. The owner approved
+Historical checks: the live collection was first created with Test as its only
+item. The owner approved
 stock of five for Test so the available-item flow could be checked. The live
 checks added one Test item, updated the quantity to two, opened checkout and
 removed the item. The later branded-domain browser check used one Test item at
@@ -318,9 +410,25 @@ that its secret key was absent from the rendered page. This remains the
 sold-out test evidence; it is not Test's current stock setting.
 
 The owner later added the Advanced November 22 and Beginner November 29 Blood
-on the Clocktower products to Public shop. The collection now has those two
-products and Test. Both event pages and their current $20.34 CAD prices were
-checked in the local preview. Their prices, stock and shipping were unchanged.
+on the Clocktower products to Public shop. Both event pages and their $20.34 CAD
+prices were checked in the local preview. Their prices, stock and shipping were
+unchanged.
+
+Current Test state, November 13, 2026: Test is **Unlisted** and was removed from
+Public shop at the owner's request. Public shop now contains only the two
+Clocktower products. The public Test URL returns 404. Its private
+`/bookings/test` page returns 200 with the main design, $100 CAD price and private
+page headers. Test has five available units at 14 Waller Street. A private cart
+check passed: add one, update to two, update back to one, open the branded
+checkout and remove Test to leave the private cart empty. No order was placed.
+
+The owner also requested that Test be a reservation with no shipment. On
+November 13, the Shopify Admin API read back
+`inventoryItem.requiresShipping: false` for Test. Its price, available quantity,
+Unlisted status and collection exclusion were kept. This saved setting is not
+proof of the hosted checkout behavior. Use one Test in the private cart to check
+that branded checkout has no delivery or shipping fields, without placing an
+order. Keep that browser result with the local check receipts.
 
 ## Sources
 

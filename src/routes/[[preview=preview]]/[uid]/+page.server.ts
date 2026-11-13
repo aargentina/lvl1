@@ -1,18 +1,23 @@
 import { asText } from '@prismicio/client';
 import { createClient } from '$lib/prismicio';
 import { error } from '@sveltejs/kit';
+import { readPrismic } from '$lib/server/prismic-read';
 
-export const prerender = 'auto';  // Re-enable prerendering
+export const prerender = 'auto'; // Re-enable prerendering
 
 export async function load({ params, fetch, cookies }) {
 	// Skip favicon and touch icon requests
-	if (['favicon.ico', 'apple-touch-icon.png', 'apple-touch-icon-precomposed.png'].includes(params.uid)) {
+	if (
+		['favicon.ico', 'apple-touch-icon.png', 'apple-touch-icon-precomposed.png'].includes(params.uid)
+	) {
 		throw error(404, 'Not found');
 	}
 
 	const client = createClient({ fetch, cookies });
 
-	const page = await client.getByUID('page', params.uid);
+	const page = await readPrismic(client, cookies, (options) =>
+		client.getByUID('page', params.uid, options)
+	);
 
 	return {
 		page,

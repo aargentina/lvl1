@@ -293,6 +293,93 @@ test('cart load omits the full cart ID and sets a private cache header', async (
 	assert.equal(input.calls[0].init.headers['Shopify-Storefront-Buyer-IP'], '192.0.2.1');
 });
 
+test('a failed stock recheck keeps the public cart visible and blocks checkout', async () => {
+	const input = event({
+		path: '/shop/cart',
+		cookies: { level_one_shop_cart: cartId },
+		responses: [data({ cart: cart() }), new Error('stock unavailable')]
+	});
+	const result = await cartRoute.load(input);
+	assert.equal(result.cart.totalQuantity, 1);
+	assert.equal(result.checkoutBlocked, true);
+	assert.match(result.checkoutMessage, /Stock could not be checked/);
+	assert.equal(input.calls.length, 2);
+});
+
+test('cart checks reuse one complete membership read and one read per product handle', async () => {
+	const twoLines = cart();
+	twoLines.totalQuantity = 2;
+	twoLines.lines.nodes.push({ ...twoLines.lines.nodes[0], id: 'gid://shopify/CartLine/2' });
+	const input = event({
+		path: '/shop/cart',
+		cookies: { level_one_shop_cart: cartId },
+		responses: [data({ cart: twoLines }), data(membership()), data({ product: product() })]
+	});
+	const result = await cartRoute.load(input);
+	assert.equal(result.checkoutBlocked, false);
+	assert.equal(input.calls.length, 3);
+});
+
+test('repeated additions cannot put more than 99 of one variant in a cart', async () => {
+	const largeCart = cart();
+	largeCart.totalQuantity = 60;
+	largeCart.lines.nodes[0].quantity = 60;
+	const input = event({
+		fields: { variantId, quantity: '40' },
+		cookies: { level_one_shop_cart: cartId },
+		responses: [data(membership()), data({ product: product() }), data({ cart: largeCart })]
+	});
+	const result = await productRoute.actions.add(input);
+	assert.equal(result.status, 409);
+	assert.match(result.data.message, /at most 99/);
+	assert.equal(input.calls.length, 3);
+	assert.equal(
+		input.calls.some((call) => call.body.query.includes('mutation')),
+		false
+	);
+	assert.equal(input.writes.length, 0);
+});
+
+test('an old cart quantity above 99 is visible but cannot check out', async () => {
+	const largeCart = cart();
+	largeCart.totalQuantity = 120;
+	largeCart.lines.nodes[0].quantity = 120;
+	const input = event({
+		path: '/shop/cart',
+		cookies: { level_one_shop_cart: cartId },
+		responses: [data({ cart: largeCart })]
+	});
+	const result = await cartRoute.load(input);
+	assert.equal(result.cart.totalQuantity, 120);
+	assert.equal(result.checkoutBlocked, true);
+	assert.match(result.checkoutMessage, /99 or fewer/);
+	const checkout = event({
+		path: '/shop/cart',
+		fields: {},
+		cookies: { level_one_shop_cart: cartId },
+		responses: [data({ cart: largeCart })]
+	});
+	assert.equal((await cartRoute.actions.checkout(checkout)).status, 409);
+	assert.equal(checkout.calls.length, 1);
+});
+
+test('the quantity ceiling counts repeated variant lines together', async () => {
+	const value = cart();
+	value.totalQuantity = 100;
+	value.lines.nodes[0].quantity = 60;
+	value.lines.nodes.push({ ...value.lines.nodes[0], id: 'gid://shopify/CartLine/2', quantity: 40 });
+	const input = event({
+		path: '/shop/cart',
+		cookies: { level_one_shop_cart: cartId },
+		responses: [data({ cart: value })]
+	});
+	const result = await cartRoute.load(input);
+	assert.equal(result.cart.totalQuantity, 100);
+	assert.equal(result.checkoutBlocked, true);
+	assert.match(result.checkoutMessage, /99 or fewer/);
+	assert.equal(input.calls.length, 1);
+});
+
 test('create uses a secure HttpOnly cookie and keeps the returned stock warning', async () => {
 	const warning = 'Only 1 item is available. The cart quantity was reduced.';
 	const input = event({
