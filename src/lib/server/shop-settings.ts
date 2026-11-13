@@ -32,7 +32,7 @@ function banner(value: unknown): ShopSettings['banner'] {
 
 export async function loadShopSettings(
 	client: Pick<Client, 'getSingle' | 'disableAutoPreviews' | 'queryLatestContent'>,
-	collectionDescription: string,
+	collectionDescription: string | Promise<string>,
 	cookies?: Pick<Cookies, 'delete'>
 ): Promise<ShopSettings> {
 	try {
@@ -49,7 +49,7 @@ export async function loadShopSettings(
 		// A missing or unavailable settings document must not block public sales.
 		return {
 			heading: 'Shop',
-			intro: text(collectionDescription) || 'Shop items from Level One Game Pub.',
+			intro: text(await collectionDescription) || 'Shop items from Level One Game Pub.',
 			banner: { url: '/redesign/games-bg.jpg', alt: '' },
 			notice: ''
 		};

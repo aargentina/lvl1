@@ -33,11 +33,12 @@ before(async () => {
 				load(id) {
 					if (id === fixtureId)
 						return `
-      export const calls=[]; let result; let failure;
-      export function set(value,error){result=value;failure=error;calls.length=0}
+      export const calls=[]; let result; let failure; let collectionReader; let settingsReader;
+      export function set(value,error){result=value;failure=error;calls.length=0;collectionReader=null;settingsReader=null}
+      export function setReaders(collection,settings){set(null);collectionReader=collection;settingsReader=settings}
       export function privateShopPage(event){event.setHeaders({'Cache-Control':'private, no-store'})}
-      export function shopClient(){return {async collection(after){calls.push(after);if(failure)throw failure;return result}}}
-      export function createClient(){return {async getSingle(){return {data:{heading:'Shop',intro:'Fixture',banner:{},notice:''}}}}}
+      export function shopClient(){return {async collection(after){calls.push(after);if(collectionReader)return collectionReader();if(failure)throw failure;return result}}}
+      export function createClient(){return {async getSingle(){if(settingsReader)return settingsReader();return {data:{heading:'Shop',intro:'Fixture',banner:{},notice:''}}}}}
     `;
 				}
 			}
@@ -106,4 +107,76 @@ test('an initial source failure is reported rather than redirected forever', asy
 	fixture.set(null, new Error('Source unavailable'));
 	await assert.rejects(route.load(event()), (cause) => cause.status === 503);
 	assert.deepEqual(fixture.calls, [null]);
+});
+
+function deferred() {
+	let resolve, reject;
+	const promise = new Promise((yes, no) => {
+		resolve = yes;
+		reject = no;
+	});
+	return { promise, resolve, reject };
+}
+
+test('Shopify and Prismic both start before either source finishes', async () => {
+	const shop = deferred(),
+		settings = deferred();
+	const started = [];
+	fixture.setReaders(
+		() => {
+			started.push('Shopify');
+			return shop.promise;
+		},
+		() => {
+			started.push('Prismic');
+			return settings.promise;
+		}
+	);
+	const loading = route.load(event());
+	// Run the queued source starts. Both responses remain held by this test.
+	await Promise.resolve();
+	try {
+		assert.deepEqual(new Set(started), new Set(['Shopify', 'Prismic']));
+	} finally {
+		shop.resolve(collection([{ handle: 'fixture' }]));
+		settings.resolve({ data: { heading: 'Current heading', intro: '', banner: {}, notice: '' } });
+	}
+	const result = await loading;
+	assert.equal(result.shopSettings.heading, 'Current heading');
+	assert.equal(result.shopSettings.intro, '');
+	assert.deepEqual(result.collection.products, [{ handle: 'fixture' }]);
+});
+
+test('a failed parallel Prismic read waits for the collection description fallback', async () => {
+	const shop = deferred();
+	fixture.setReaders(
+		() => shop.promise,
+		async () => {
+			throw new Error('Settings are unavailable');
+		}
+	);
+	const loading = route.load(event());
+	shop.resolve({ ...collection(), description: '  Current collection description  ' });
+	const result = await loading;
+	assert.equal(result.shopSettings.heading, 'Shop');
+	assert.equal(result.shopSettings.intro, 'Current collection description');
+	assert.deepEqual(result.shopSettings.banner, { url: '/redesign/games-bg.jpg', alt: '' });
+});
+
+test('Shopify failure keeps its status when the parallel Prismic read fails later', async () => {
+	for (const query of ['', '?after=old-cursor']) {
+		const shop = deferred(),
+			settings = deferred();
+		fixture.setReaders(
+			() => shop.promise,
+			() => settings.promise
+		);
+		const loading = route.load(event(query));
+		const rejected = assert.rejects(loading, query ? firstPage : (cause) => cause.status === 503);
+		shop.reject(new Error('Shopify is unavailable'));
+		await rejected;
+		settings.reject(new Error('Settings failed after Shopify'));
+		// Let the late rejection settle. Node reports any unhandled rejection as a failure.
+		await new Promise(setImmediate);
+	}
 });

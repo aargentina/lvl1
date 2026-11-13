@@ -26,6 +26,12 @@ collection heading, product images, descriptions, prices and stock still come
 from Shopify. The page layout, fonts and colours stay in website code. Shop
 settings do not change private booking pages or Shopify checkout.
 
+The Shopify collection and Prismic Shop settings reads start in parallel.
+The page waits for both results. It does not wait for the collection before
+it starts the settings read. If settings fail, the collection description
+still supplies the intro. A blank intro in an existing settings document
+stays blank.
+
 If the settings document is absent, unavailable or times out after five
 seconds, the shop uses its original heading, collection intro and local banner.
 An existing document with blank optional fields hides those fields. Text is

@@ -8,19 +8,26 @@ export const load: PageServerLoad = async (event) => {
 	privateShopPage(event);
 	const after = event.url.searchParams.get('after');
 	if (after && after.length > 1024) redirect(303, '/shop');
+	const collectionRead = Promise.resolve().then(() => shopClient(event).collection(after));
+	const collectionDescription = collectionRead.then(
+		(collection) => collection.description,
+		() => ''
+	);
+	// Start both source reads now. Only failed settings need the collection text.
+	const settingsRead = loadShopSettings(
+		createClient({ fetch: event.fetch, cookies: event.cookies }),
+		collectionDescription,
+		event.cookies
+	);
 	let collection;
 	try {
-		collection = await shopClient(event).collection(after);
+		collection = await collectionRead;
 	} catch {
 		if (after) redirect(303, '/shop');
 		error(503, 'The shop is not available. Please try again shortly.');
 	}
 	if (after && collection.products.length === 0) redirect(303, '/shop');
-	const shopSettings = await loadShopSettings(
-		createClient({ fetch: event.fetch, cookies: event.cookies }),
-		collection.description,
-		event.cookies
-	);
+	const shopSettings = await settingsRead;
 	return {
 		collection,
 		shopSettings,
