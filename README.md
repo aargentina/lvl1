@@ -63,10 +63,16 @@ site reads its products, prices and availability on each request. Shopify keeps
 the cart, checkout and orders. See [the shop guide](docs/SHOPIFY_SHOP.md) for the
 product steps, local checks, access limits and release plan.
 
-Edit the shop heading, intro, banner and notice in the Prismic **Shop settings**
-document. Publish the document to use the changes on the next shop request.
+Edit the screen-reader heading and notice in the Prismic **Shop settings**
+document. The large banner, intro and visible collection heading are removed.
+The earlier intro and banner fields stay saved but are not displayed.
+Publish the document to use the changes on the next shop request.
 Products, prices and stock stay in Shopify. This connection needs the website
 release before it changes the live shop.
+
+The Gift Cards tile links directly to the existing Toast gift card page. It
+uses the same card design as the Shopify items and does not enter the Shopify
+cart. Tile copy and artwork are maintained in the website code.
 
 For a physical item, keep **Physical product** on and check its shipping settings.
 For an event ticket, reservation or deposit with no shipment, turn **Physical

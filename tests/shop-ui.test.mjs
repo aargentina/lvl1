@@ -70,6 +70,11 @@ const formByAction = (html, action) =>
 	(html.match(/<form\b[^>]*>[\s\S]*?<\/form>/g) ?? []).find((form) =>
 		form.includes(`action="?/${action}"`)
 	);
+const toastGiftCardUrl = 'https://order.toasttab.com/egiftcards/level-one-14-waller-st';
+const giftCardTile = (html) =>
+	(html.match(/<article\b[^>]*>[\s\S]*?<\/article>/g) ?? []).find((article) =>
+		article.includes(`href="${toastGiftCardUrl}"`)
+	);
 
 test('shop pages render current sale data and safe purchase states', async (t) => {
 	const hmrServer = createHttpServer();
@@ -133,7 +138,7 @@ test('shop pages render current sale data and safe purchase states', async (t) =
 			}).body;
 
 		await t.test(
-			'Prismic shop fields change the page without changing Shopify product cards',
+			'the shop omits its old hero and collection heading while keeping its notice and products',
 			() => {
 				const html = renderShop(
 					collection(),
@@ -147,11 +152,12 @@ test('shop pages render current sale data and safe purchase states', async (t) =
 						notice: 'Event tickets cannot be returned.'
 					})
 				);
-				assert.match(html, /<h1\b[^>]*>Games and events<\/h1>/);
-				assert.match(html, /Find your next game\.\nBook an event\./);
-				assert.match(html, /src="https:\/\/images\.prismic\.io\/lvl1\/shop-banner-fixture\.jpg"/);
-				assert.match(html, /alt=""/);
-				assert.doesNotMatch(html, /alt="Games at Level One"/);
+				const pageHeading = html.match(/<h1\b[^>]*>[\s\S]*?<\/h1>/)?.[0];
+				assert.ok(pageHeading);
+				assert.match(pageHeading, /class="[^"]*\bsr-only\b[^"]*"/);
+				assert.doesNotMatch(html, /Find your next game\.|Book an event\./);
+				assert.doesNotMatch(html, /shop-banner-fixture\.jpg|Games at Level One/);
+				assert.doesNotMatch(html, /<h[1-6]\b[^>]*>Public shop<\/h[1-6]>/);
 				assert.match(html, /Event tickets cannot be returned\./);
 				assert.doesNotMatch(html, /Items selected for public sale\./);
 				assert.match(html, /href="\/shop\/test"/);
@@ -160,7 +166,7 @@ test('shop pages render current sale data and safe purchase states', async (t) =
 			}
 		);
 
-		await t.test('shop text and banner alt text are escaped', () => {
+		await t.test('shop notice text is escaped', () => {
 			const text = '<img src=x onerror=alert(1)><script>alert(2)</script>';
 			const html = renderShop(
 				collection(),
@@ -176,12 +182,22 @@ test('shop pages render current sale data and safe purchase states', async (t) =
 			assert.match(html, /href="\/shop\/test"/);
 		});
 
-		await t.test('blank optional shop fields hide their content', () => {
+		await t.test('a blank shop notice is hidden and no hero is rendered', () => {
 			const html = renderShop(collection(), shopSettings({ intro: '', banner: null, notice: '' }));
 			assert.match(html, /<h1\b[^>]*>Shop<\/h1>/);
 			assert.doesNotMatch(html, /games-bg\.jpg|Items selected for public sale\./);
-			assert.doesNotMatch(html, /role="(?:status|note|alert)"/);
+			assert.doesNotMatch(html, /aria-label="Shop notice"/);
 			assert.match(html, /href="\/shop\/test"/);
+		});
+
+		await t.test('the gift card tile opens Toast without entering the Shopify cart', () => {
+			const tile = giftCardTile(renderShop(collection()));
+			assert.ok(tile);
+			assert.match(tile, /Gift [Cc]ards/);
+			assert.match(tile, /Toast/);
+			assert.match(tile, /<img\b|<svg\b/);
+			assert.doesNotMatch(tile, /<form\b|Add to cart|variantId|gid:\/\/shopify\//);
+			assert.doesNotMatch(tile, /href="\/shop\//);
 		});
 
 		await t.test('booking detail uses the shared purchase design and a separate cart', () => {
@@ -320,15 +336,20 @@ test('shop pages render current sale data and safe purchase states', async (t) =
 			assert.doesNotMatch(renderShop(collection({ description: text })), /<script>|<img src=x/);
 		});
 
-		await t.test('collection cursor is encoded and empty collection has no sale link', () => {
-			const list = renderShop(
-				collection({ pageInfo: { hasNextPage: true, endCursor: 'cursor+/=?&' } })
-			);
-			assert.match(list, /href="\/shop\?after=cursor%2B%2F%3D%3F%26"/);
-			const empty = renderShop(collection({ products: [] }));
-			assert.match(empty, /There are no items in the shop/);
-			assert.doesNotMatch(empty, /href="\/shop\/test"/);
-		});
+		await t.test(
+			'collection paging stays encoded and an empty collection keeps the gift card tile',
+			() => {
+				const list = renderShop(
+					collection({ pageInfo: { hasNextPage: true, endCursor: 'cursor+/=?&' } })
+				);
+				assert.match(list, /href="\/shop\?after=cursor%2B%2F%3D%3F%26"/);
+				assert.ok(giftCardTile(list));
+				const empty = renderShop(collection({ products: [] }));
+				assert.ok(giftCardTile(empty));
+				assert.doesNotMatch(empty, /There are no items in the shop/);
+				assert.doesNotMatch(empty, /href="\/shop\/test"/);
+			}
+		);
 
 		await t.test('cart shows Shopify quantity and subtotal without rebuilding the price', () => {
 			const html = renderCart(cart());

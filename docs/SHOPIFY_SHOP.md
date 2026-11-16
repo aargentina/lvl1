@@ -5,14 +5,17 @@ Shopify keeps the products, prices, stock, cart, checkout and orders.
 
 ## Edit the shop page in Prismic
 
-Open the single **Shop settings** document in Prismic. Edit these four fields:
+Open the single **Shop settings** document in Prismic:
 
-- **Heading**: the large title at the top. A blank heading uses `Shop`.
-- **Intro**: the text below the heading. Leave it blank to hide it.
-- **Banner**: the image behind the heading. Select an image from the Prismic
-  media library. It uses the site's dark overlay so the text stays readable.
-  Clear the image to hide it.
+- **Heading**: the page title for screen readers. It is not a visible banner.
+  A blank heading uses `Shop`.
 - **Notice text**: the notice above the product list. Leave it blank to hide it.
+- **Intro** and **Banner**: these earlier fields stay saved, but the shop does
+  not display them. The owner removed the large banner on November 16, 2026.
+
+The product tiles start below the Shop and Cart links. The page does not show
+the `Public shop` collection title. Keep that collection name in Shopify; it
+still controls which products can be sold through the main shop.
 
 Save and publish the document. After the website release, its published values
 are read on each shop request. No site rebuild is needed for these content
@@ -22,20 +25,19 @@ that contains this connection.
 
 The `shop_settings` model is saved in `customtypes/shop_settings/index.json`.
 It has one document per locale, not a page for each product. The product list,
-collection heading, product images, descriptions, prices and stock still come
+product images, descriptions, prices and stock still come
 from Shopify. The page layout, fonts and colours stay in website code. Shop
 settings do not change private booking pages or Shopify checkout.
 
 The Shopify collection and Prismic Shop settings reads start in parallel.
 The page waits for both results. It does not wait for the collection before
-it starts the settings read. If settings fail, the collection description
-still supplies the intro. A blank intro in an existing settings document
-stays blank.
+it starts the settings read. The loader keeps its earlier intro fallback,
+but the new page does not display an intro.
 
 If the settings document is absent, unavailable or times out after five
-seconds, the shop uses its original heading, collection intro and local banner.
-An existing document with blank optional fields hides those fields. Text is
-rendered as plain text, and banners must use HTTPS on a Prismic image host.
+seconds, the shop uses `Shop` as its screen-reader heading and hides the notice.
+Text is rendered as plain text. The saved intro and banner values do not add
+visible content to this page.
 
 Setup on November 13, 2026: the live repository `lvl1` has the four-field
 single model. The **Shop settings — 2026-11-13** release
@@ -50,7 +52,8 @@ The website's existing preview endpoint adds `/preview` to resolved routes.
 For the exact Shop settings destination `/preview/shop`, it now returns `/shop`
 and keeps the SDK's preview cookie and response headers. Other page previews
 keep their existing destinations. After Brandon merges the website change,
-check all four published fields on the live shop.
+check the accessible heading and notice on the live shop. The saved intro
+and banner must stay hidden.
 
 An author can also reach Shop from another Prismic page preview. GET and HEAD
 requests under `/preview/shop` return to the matching `/shop` path with the query
@@ -70,6 +73,19 @@ once more under the same time limit. Other errors do not clear the cookie or
 cause a preview retry. If the navigation read fails or returns invalid data,
 the main menu uses fixed site links so a shop or booking page can still open.
 A normal content page still needs its own Prismic content to render.
+
+## Gift cards
+
+The Gift Cards tile uses the same grid and card design as the Shopify items.
+It links directly to
+`https://order.toasttab.com/egiftcards/level-one-14-waller-st`.
+The customer chooses a value and buys the gift card on Toast. This tile is
+website content, not Shopify merchandise. Do not create a Shopify product or
+add it to Public shop for this link. It has no Shopify price, stock or cart
+action. It stays visible when the Shopify collection has no available items.
+
+The main navigation keeps its existing Gift Cards link. Tile copy and artwork
+are in the website code. A later change to those needs a website release.
 
 ## Add an item for public sale
 
@@ -381,7 +397,9 @@ any required GitHub or Vercel checks. After Brandon merges, use one check sessio
    the phone layout. The public shop must list the two event products and omit
    Test. `/shop/test` must return 404. Do not add a real event ticket for this
    Test check.
-2. Check the published Prismic heading, intro, banner and hidden blank notice.
+2. Check that the large banner and visible Public shop heading are absent.
+   Check the Gift Cards tile and its Toast destination. Check the Prismic
+   screen-reader heading and notice; a blank notice stays hidden.
    Check a normal content preview and its Shop navigation. Check that an expired
    preview can return to published content without a page error.
 3. Open `/bookings/test`. It must show $100 CAD and current availability. Check
