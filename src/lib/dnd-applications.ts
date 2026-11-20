@@ -23,7 +23,7 @@ export function dndLocalReviewOrigin(
 	}
 }
 
-/** Local review uses synthetic forms. Production always uses the public forms. */
+/** Local review uses synthetic forms. Production opens the Level One player portal on the chosen sign-up form. */
 export function dndApplicationHref(
 	role: ApplicationRole,
 	development: boolean,
@@ -32,5 +32,5 @@ export function dndApplicationHref(
 	const reviewOrigin = dndLocalReviewOrigin(development, localReviewOrigin);
 	return reviewOrigin
 		? `${reviewOrigin}/games/preview?view=join-${role}`
-		: `https://level-one-dashboard.vercel.app/games/join/${role}`;
+		: `https://players.levelonegamepub.com/?role=${role}`;
 }

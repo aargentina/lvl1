@@ -67,7 +67,7 @@ test('the D&D page opens each application on the dashboard and keeps its CMS con
 		const { render } = await server.ssrLoadModule('svelte/server');
 		const { dndApplicationHref } = await server.ssrLoadModule('/src/lib/dnd-applications.ts');
 		for (const role of ['player', 'dm']) {
-			const canonical = `https://level-one-dashboard.vercel.app/games/join/${role}`;
+			const canonical = `https://players.levelonegamepub.com/?role=${role}`;
 			assert.equal(dndApplicationHref(role, false, 'http://127.0.0.1:3107'), canonical);
 			assert.equal(dndApplicationHref(role, true), canonical);
 			assert.equal(
@@ -101,11 +101,19 @@ test('the D&D page opens each application on the dashboard and keeps its CMS con
 		assert.deepEqual(
 			links.map((url) => url.href),
 			[
-				'https://level-one-dashboard.vercel.app/games/join/player',
-				'https://level-one-dashboard.vercel.app/games/join/dm'
+				'https://players.levelonegamepub.com/?role=player',
+				'https://players.levelonegamepub.com/?role=dm'
 			]
 		);
-		assert.ok(links.every((url) => !url.search && !url.hash));
+		// The only query is the chosen role; no other data travels in the link.
+		assert.ok(
+			links.every(
+				(url) =>
+					[...url.searchParams.keys()].join() === 'role' &&
+					['player', 'dm'].includes(url.searchParams.get('role')) &&
+					!url.hash
+			)
+		);
 		assert.match(result.body, /Apply as a player/);
 		assert.match(result.body, /Apply as a DM/);
 		assert.match(result.body, /does not guarantee a place/);

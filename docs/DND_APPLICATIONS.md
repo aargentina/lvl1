@@ -2,8 +2,8 @@
 
 The public `/dnd` page has two links:
 
-- Apply as a player: `https://level-one-dashboard.vercel.app/games/join/player`
-- Apply as a DM: `https://level-one-dashboard.vercel.app/games/join/dm`
+- Apply as a player: `https://players.levelonegamepub.com/?role=player` (the Level One player portal)
+- Apply as a DM: `https://players.levelonegamepub.com/?role=dm`
 
 Each link opens a full page. The dashboard collects the application, verifies the
 email address and stores the record for the games officer. The website does
