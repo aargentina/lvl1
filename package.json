@@ -2,6 +2,9 @@
 	"name": "sveltekit-starter-prismic-multi-page",
 	"version": "0.0.1",
 	"private": true,
+	"engines": {
+		"node": "24.x"
+	},
 	"scripts": {
 		"dev": "concurrently \"npm:vite:dev\" \"npm:slicemachine\" --prefix-colors blue,magenta",
 		"vite:dev": "vite dev",
@@ -9,6 +12,7 @@
 		"preview": "vite preview",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
+		"test:forms": "node --experimental-strip-types --test tests/form-email.test.mjs tests/form-resend-sdk.test.mjs tests/form-review-corrections.test.mjs",
 		"test:menu": "node --experimental-strip-types --test tests/menu-stock.test.mjs tests/menu-labels.test.mjs",
 		"lint": "prettier --check . && eslint .",
 		"format": "prettier --write .",
@@ -58,7 +62,7 @@
 		"@vercel/speed-insights": "^1.1.0",
 		"clsx": "^2.1.1",
 		"flexsearch": "^0.7.43",
-		"resend": "^4.1.1",
+		"resend": "6.38.0",
 		"xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"
 	}
 }
