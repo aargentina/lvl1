@@ -35,7 +35,7 @@
 				{#if isFilled.link(slice.primary.buttonLink)}
 					<PrismicLink
 						field={slice.primary.buttonLink}
-						class="rounded-xl bg-gradient-to-br from-red to-red-bright px-5 py-3 font-display text-2xl font-black text-chalk transition-shadow duration-300 ease-in-out hover:shadow-lg hover:shadow-red/40"
+						class="rounded-xl bg-gradient-to-br from-red to-red-bright px-5 py-3 font-heading text-2xl leading-tight tracking-tight text-chalk transition-shadow duration-300 ease-in-out hover:shadow-lg hover:shadow-red/40"
 					>
 						{slice.primary.buttonText || 'Learn More'}
 					</PrismicLink>
