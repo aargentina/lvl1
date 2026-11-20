@@ -108,12 +108,18 @@ export function escapeHtml(value: string): string {
 	);
 }
 
-export function prepareFormMail(form: FormData): { mail: FormMail; idempotencyKey: string } | null {
+/** A "news and offers" Yes to save on the dashboard subscriber list. The staff email does not mention it. */
+export type EmailOffers = { form: 'contact' | 'large_reso'; email: string; name: string };
+
+export function prepareFormMail(
+	form: FormData
+): { mail: FormMail; idempotencyKey: string; offers: EmailOffers | null } | null {
 	const isReservation = form.has('organizerName');
 	const allowed = new Set([
 		'email',
 		'hp_7c2',
 		'submissionId',
+		'emailOffers',
 		...(isReservation
 			? [
 					'organizerName',
@@ -138,6 +144,10 @@ export function prepareFormMail(form: FormData): { mail: FormMail; idempotencyKe
 	// Meaningless name on purpose: autofill must never match it, or real requests get silently dropped.
 	const honeypot = form.get('hp_7c2');
 	if (typeof honeypot === 'string' && honeypot.length > 0) return null;
+	// The optional news and offers box sends "on" only when it is selected.
+	if (form.has('emailOffers') && form.get('emailOffers') !== 'on')
+		throw new FormInputError('The form contains an invalid field. Please reload it and try again.');
+	const wantsOffers = form.get('emailOffers') === 'on';
 	const submissionId = form.has('submissionId')
 		? field(form, 'submissionId', 'submission', 36)
 		: randomUUID();
@@ -159,8 +169,10 @@ export function prepareFormMail(form: FormData): { mail: FormMail; idempotencyKe
 		throw new FormInputError('Enter a valid email address.');
 	let subject: string;
 	let html: string;
+	let offersName: string;
 	if (isReservation) {
 		const organizerName = field(form, 'organizerName', 'organizer name', 120);
+		offersName = organizerName;
 		const phone = field(form, 'phone', 'phone number', 50);
 		if (!/^[+\d().\s#xext-]{7,50}$/i.test(phone) || phone.replace(/\D/g, '').length < 7)
 			throw new FormInputError('Enter a valid phone number.');
@@ -211,6 +223,7 @@ export function prepareFormMail(form: FormData): { mail: FormMail; idempotencyKe
 		<h2>Additional Requirements</h2><p style="white-space: pre-wrap">${escapeHtml(additional || 'None provided')}</p>`;
 	} else {
 		const name = field(form, 'name', 'name', 120);
+		offersName = name;
 		const message = field(form, 'message', 'message', FORM_TEXT_LIMIT, false, true);
 		subject = 'New Contact Form Submission';
 		html = `<h1>New Contact Form Submission</h1><p><strong>Name:</strong> ${escapeHtml(name)}</p><p><strong>Email:</strong> ${escapeHtml(email)}</p><p style="white-space: pre-wrap"><strong>Message:</strong> ${escapeHtml(message)}</p>`;
@@ -223,7 +236,13 @@ export function prepareFormMail(form: FormData): { mail: FormMail; idempotencyKe
 		html
 	};
 	const contentHash = createHash('sha256').update(JSON.stringify(mail)).digest('hex');
-	return { mail, idempotencyKey: `website-form/${submissionId}/${contentHash}` };
+	return {
+		mail,
+		idempotencyKey: `website-form/${submissionId}/${contentHash}`,
+		offers: wantsOffers
+			? { form: isReservation ? 'large_reso' : 'contact', email, name: offersName }
+			: null
+	};
 }
 
 const providerErrorCodes = new Set([
@@ -273,7 +292,8 @@ export async function handleFormEmail(
 	send: (
 		mail: FormMail,
 		options: { idempotencyKey: string }
-	) => Promise<{ error: unknown; data?: { id: string } | null }>
+	) => Promise<{ error: unknown; data?: { id: string } | null }>,
+	saveOffers?: (offers: EmailOffers) => Promise<unknown>
 ): Promise<Response> {
 	const headers = { 'cache-control': 'no-store' };
 	const failedSend = () =>
@@ -307,6 +327,14 @@ export async function handleFormEmail(
 	if (!prepared) {
 		console.info('website_form', { event: 'honeypot_dropped' });
 		return Response.json({ success: true }, { headers });
+	}
+	// Save a Yes before the mail. A failed save never stops the form email.
+	if (prepared.offers && saveOffers) {
+		try {
+			await saveOffers(prepared.offers);
+		} catch {
+			console.warn('website_form', { event: 'offers_save_failed' });
+		}
 	}
 	try {
 		const result = await send(prepared.mail, { idempotencyKey: prepared.idempotencyKey });

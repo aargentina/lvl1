@@ -78,6 +78,19 @@
 				/>
 			</label>
 
+			<label class="flex items-center gap-3 py-2 text-chalk">
+				<input
+					name="emailOffers"
+					type="checkbox"
+					class="h-4 w-4 rounded border-white/30 bg-chalk text-red-bright focus:ring-red-bright"
+				/>
+				<span
+					>Email me with news and offers. <span class="opacity-70"
+						>You can unsubscribe at any time</span
+					></span
+				>
+			</label>
+
 			<label class="label py-2">
 				<span>Comment</span>
 				<textarea

@@ -10,6 +10,13 @@ registerHooks({
 				url: 'data:text/javascript,export const RESEND_API_KEY="re_synthetic_no_send"',
 				shortCircuit: true
 			};
+		if (specifier === '$env/dynamic/private')
+			return { url: 'data:text/javascript,export const env={}', shortCircuit: true };
+		if (specifier === '$lib/server/marketingSignup')
+			return {
+				url: new URL('../src/lib/server/marketingSignup.ts', import.meta.url).href,
+				shortCircuit: true
+			};
 		if (specifier === '$lib/server/formEmail')
 			return {
 				url: new URL('../src/lib/server/formEmail.ts', import.meta.url).href,

@@ -171,6 +171,20 @@
 						{/if}
 					</label>
 
+					<!-- News and offers (optional, owner request 2026-11-20) -->
+					<label class="flex items-center gap-3 text-chalk md:col-span-2">
+						<input
+							name="emailOffers"
+							type="checkbox"
+							class="h-4 w-4 rounded border-white/30 bg-chalk text-red-bright focus:ring-red-bright"
+						/>
+						<span
+							>Email me with news and offers. <span class="opacity-70"
+								>You can unsubscribe at any time</span
+							></span
+						>
+					</label>
+
 					<!-- Organization Name (Optional) -->
 					<label class="label py-2">
 						<span class="text-chalk/70 font-medium">Organization Name</span>
