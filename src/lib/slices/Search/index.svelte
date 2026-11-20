@@ -10,27 +10,24 @@
 	}
 
 	let { slice } = $props();
-
-	// Structured data for search engines
-	const structuredData = {
-		'@context': 'https://schema.org',
-		'@type': 'WebPage',
-		name: 'Board Game Search',
-		description:
-			'Search and discover board games by category, player count, and more. Find your next favorite game from our extensive collection.',
-		mainEntity: {
-			'@type': 'WebApplication',
-			name: 'Board Game Search Tool',
-			description:
-				'Interactive search tool for board games with category filtering and real-time results',
-			applicationCategory: 'EntertainmentApplication',
-			operatingSystem: 'Web Browser'
-		}
-	};
 </script>
 
 <svelte:head>
-	<script type="application/ld+json">{JSON.stringify(structuredData)}</script>
+	<script type="application/ld+json">
+		{
+			"@context": "https://schema.org",
+			"@type": "WebPage",
+			"name": "Board Game Search",
+			"description": "Search and discover board games by category, player count, and more. Find your next favorite game from our extensive collection.",
+			"mainEntity": {
+				"@type": "WebApplication",
+				"name": "Board Game Search Tool",
+				"description": "Interactive search tool for board games with category filtering and real-time results",
+				"applicationCategory": "EntertainmentApplication",
+				"operatingSystem": "Web Browser"
+			}
+		}
+	</script>
 </svelte:head>
 
 <div class="flex justify-center bg-ink-noise font-body text-chalk">

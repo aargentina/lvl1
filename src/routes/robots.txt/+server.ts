@@ -1,3 +1,5 @@
+import { siteUrl } from '$lib/pub';
+
 export const GET = async () => {
   const body = `User-agent: *
 Allow: /
@@ -11,7 +13,7 @@ Disallow: /tag/
 Disallow: /page/
 Disallow: /blog/
 Disallow: /pages/
-Sitemap: https://levelonegamepub.com/sitemap.xml
+Sitemap: ${siteUrl}/sitemap.xml
 `;
   return new Response(body, {
     headers: {
