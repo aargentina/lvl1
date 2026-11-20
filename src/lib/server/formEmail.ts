@@ -112,7 +112,7 @@ export function prepareFormMail(form: FormData): { mail: FormMail; idempotencyKe
 	const isReservation = form.has('organizerName');
 	const allowed = new Set([
 		'email',
-		'companyWebsite',
+		'hp_7c2',
 		'submissionId',
 		...(isReservation
 			? [
@@ -135,7 +135,8 @@ export function prepareFormMail(form: FormData): { mail: FormMail; idempotencyKe
 				'The form contains an invalid field. Please reload it and try again.'
 			);
 	}
-	const honeypot = form.get('companyWebsite');
+	// Meaningless name on purpose: autofill must never match it, or real requests get silently dropped.
+	const honeypot = form.get('hp_7c2');
 	if (typeof honeypot === 'string' && honeypot.length > 0) return null;
 	const submissionId = form.has('submissionId')
 		? field(form, 'submissionId', 'submission', 36)

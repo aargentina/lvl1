@@ -23,7 +23,7 @@ const contact = () => ({
 	name: 'Synthetic Visitor',
 	email: 'visitor@example.com',
 	message: 'A synthetic message.',
-	companyWebsite: '',
+	hp_7c2: '',
 	submissionId: randomUUID()
 });
 const group = () => ({
@@ -38,7 +38,7 @@ const group = () => ({
 	gameType: 'both',
 	paymentArrangements: 'one-bill',
 	additionalRequirements: '',
-	companyWebsite: '',
+	hp_7c2: '',
 	submissionId: randomUUID()
 });
 function data(fields) {
@@ -99,12 +99,12 @@ test('all nonempty trap text is dropped after structural checks', async () => {
 		called = true;
 		return send();
 	};
-	for (const companyWebsite of [' ', '\u0000', 'x'.repeat(5000), '漢'.repeat(10000)]) {
-		const response = await handleFormEmail(request({ ...contact(), companyWebsite }), url, fake);
+	for (const hp_7c2 of [' ', '\u0000', 'x'.repeat(5000), '漢'.repeat(10000)]) {
+		const response = await handleFormEmail(request({ ...contact(), hp_7c2 }), url, fake);
 		assert.equal(response.status, 200);
 	}
 	const invalidForms = [data(contact()), data(contact()), data(contact())];
-	for (const form of invalidForms) form.set('companyWebsite', 'filled');
+	for (const form of invalidForms) form.set('hp_7c2', 'filled');
 	invalidForms[0].append('email', 'other@example.com');
 	invalidForms[1].append('unknown', 'extra');
 	invalidForms[2].set('message', new File(['file'], 'file.txt'));
@@ -182,7 +182,7 @@ test('diagnostics use fixed categories and contain no private fixture text', asy
 			category: 'fields',
 			status: 400
 		});
-		await expectOne(request({ ...fields, companyWebsite: failText }), send, {
+		await expectOne(request({ ...fields, hp_7c2: failText }), send, {
 			event: 'honeypot_dropped'
 		});
 	} finally {

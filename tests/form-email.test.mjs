@@ -28,7 +28,7 @@ const contact = () => ({
 	name: 'Élodie 王',
 	email: 'visitor@example.com',
 	message: 'Please tell me about games.',
-	companyWebsite: '',
+	hp_7c2: '',
 	submissionId: randomUUID()
 });
 const group = () => ({
@@ -43,7 +43,7 @@ const group = () => ({
 	gameType: 'both',
 	paymentArrangements: 'one-bill',
 	additionalRequirements: 'A quiet table, please.',
-	companyWebsite: '',
+	hp_7c2: '',
 	submissionId: randomUUID()
 });
 function data(fields) {
@@ -216,7 +216,7 @@ test('duplicate, unknown, file and mixed form fields are rejected', () => {
 test('a populated honeypot returns a quiet success without a mail request', async () => {
 	let called = false;
 	const response = await handleFormEmail(
-		request({ ...contact(), companyWebsite: 'https://spam.example' }),
+		request({ ...contact(), hp_7c2: 'https://spam.example' }),
 		url,
 		async () => {
 			called = true;
@@ -341,7 +341,7 @@ test('both client forms keep a retry ID, guard repeat submits and expose a label
 		assert.match(source, /submissionId \|\|= crypto.randomUUID/);
 		assert.match(source, /formData.set\('submissionId', submissionId\)/);
 		assert.match(source, /Leave this field blank/);
-		assert.match(source, /name="companyWebsite"/);
+		assert.match(source, /name="hp_7c2"/);
 		assert.match(source, /response.status === 429/);
 	}
 });

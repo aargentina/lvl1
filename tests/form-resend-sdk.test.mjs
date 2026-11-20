@@ -40,7 +40,7 @@ test('the installed SDK sends Reply-To and the retry header through the real rou
 			name: 'Synthetic Visitor',
 			email: 'visitor@example.com',
 			message: 'A synthetic form test.',
-			companyWebsite: '',
+			hp_7c2: '',
 			submissionId: '62f752e8-453d-47be-91bf-52f8464e9a6a'
 		};
 		for (let index = 0; index < 2; index++) {
