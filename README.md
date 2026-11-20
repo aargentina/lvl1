@@ -95,3 +95,15 @@ only `key`, `name`, `unavailable`, `isNew` and `source`.
 Add `?stock-preview=1` to `/food` or `/drink` to render sample labels without calling
 the feed, for reviewing the design. The server decides whether it is allowed: it works
 in `npm run dev` and in Vercel Preview builds, and does nothing in production.
+
+## News and offers box
+
+The Contact Us form and the Large group form have an optional box under the
+email field: "Email me with news and offers". It
+is not selected at the start. `/api/send-email` checks the form with `formEmail.ts` (the field must be `on`), skips the spam trap, and sends only a Yes to the
+dashboard at `MARKETING_SIGNUP_URL` with the server-only
+`MARKETING_SIGNUP_WEBSITE_KEY` (at least 32 characters, the same value as the
+dashboard's key of that name). The dashboard saves it for its Email subscribers
+page. The staff email does not mention the answer (owner decision,
+2026-11-20). A missing setting or a dashboard failure never stops the form
+email. Run `npm run test:forms`.
