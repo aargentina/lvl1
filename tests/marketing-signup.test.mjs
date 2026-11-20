@@ -170,10 +170,12 @@ test('both forms have the optional, unselected box under the email field', async
 		const source = await readFile(new URL(`../${file}`, import.meta.url), 'utf8');
 		const box = source.indexOf('name="emailOffers"');
 		assert.ok(box > source.indexOf('name="email"'), file);
-		assert.match(
-			source,
-			/<input\s+name="emailOffers"\s+type="checkbox"\s+class="[^"]*"\s*\/>\s*<span\s*>Email me with news and offers\. <span class="opacity-70"\s*>You can unsubscribe at any time<\/span\s*><\/span\s*>/
-		);
+		// Strip tags and whitespace so a Prettier reflow can't break this.
+		const text = source
+			.slice(box, box + 600)
+			.replace(/<[^>]*>/g, ' ')
+			.replace(/\s+/g, ' ');
+		assert.match(text, /Email me with news and offers\. You can unsubscribe at any time/, file);
 		assert.doesNotMatch(source.slice(box, box + 160), /checked|required/);
 	}
 });

@@ -99,7 +99,7 @@ in `npm run dev` and in Vercel Preview builds, and does nothing in production.
 ## News and offers box
 
 The Contact Us form and the Large group form have an optional box under the
-email field: "Email me with news and offers" (the Shopify checkout words). It
+email field: "Email me with news and offers". It
 is not selected at the start. `/api/send-email` checks the form with `formEmail.ts` (the field must be `on`), skips the spam trap, and sends only a Yes to the
 dashboard at `MARKETING_SIGNUP_URL` with the server-only
 `MARKETING_SIGNUP_WEBSITE_KEY` (at least 32 characters, the same value as the

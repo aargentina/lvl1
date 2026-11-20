@@ -14,5 +14,8 @@ export const POST: RequestHandler = ({ request, url }) =>
 		request,
 		url,
 		(mail, options) => resend.emails.send(mail, options),
-		({ form, email, name }) => saveEmailOffers(form, email, name, env)
+		async ({ form, email, name }) => {
+			// saveEmailOffers never throws; throwing here is what logs offers_save_failed.
+			if ((await saveEmailOffers(form, email, name, env)) !== 'saved') throw new Error('not saved');
+		}
 	);

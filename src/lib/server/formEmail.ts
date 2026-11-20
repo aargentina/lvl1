@@ -328,14 +328,13 @@ export async function handleFormEmail(
 		console.info('website_form', { event: 'honeypot_dropped' });
 		return Response.json({ success: true }, { headers });
 	}
-	// Save a Yes before the mail. A failed save never stops the form email.
-	if (prepared.offers && saveOffers) {
-		try {
-			await saveOffers(prepared.offers);
-		} catch {
-			console.warn('website_form', { event: 'offers_save_failed' });
-		}
-	}
+	// Save a Yes alongside the mail so a slow dashboard can't delay the form. A failed save never stops the email.
+	const saving =
+		prepared.offers && saveOffers
+			? saveOffers(prepared.offers).catch(() =>
+					console.warn('website_form', { event: 'offers_save_failed' })
+				)
+			: undefined;
 	try {
 		const result = await send(prepared.mail, { idempotencyKey: prepared.idempotencyKey });
 		if (result.error || !result.data?.id) {
@@ -345,6 +344,8 @@ export async function handleFormEmail(
 	} catch {
 		console.warn('website_form', { event: 'transport_failed', code: 'transport_error' });
 		return failedSend();
+	} finally {
+		await saving;
 	}
 	return Response.json({ success: true }, { headers });
 }
