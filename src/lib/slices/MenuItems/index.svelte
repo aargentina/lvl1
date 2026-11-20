@@ -71,8 +71,9 @@
 				unavailable={card.remove_items === true ||
 					stock?.unavailable === true ||
 					(preview && index === 0)}
-				isNew={stock?.isNew === true || (preview && index <= 1)}
 			/>
+			<!-- "New" badge shelved at client request (2026-11). To restore, pass:
+			     isNew={stock?.isNew === true || (preview && index <= 1)} -->
 		{/each}
 	</ul>
 </div>

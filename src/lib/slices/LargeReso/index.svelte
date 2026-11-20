@@ -253,14 +253,14 @@
 				<div class="mt-8 text-center">
 					<button
 						type="submit"
-						class="rounded-xl bg-gradient-to-br from-red to-red-bright px-8 py-4 font-display text-xl font-black text-chalk hover:shadow-lg hover:shadow-red/40 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+						class="rounded-xl bg-gradient-to-br {success ? 'from-green-700 to-green-600 hover:shadow-green-700/40' : 'from-red to-red-bright hover:shadow-red/40'} px-8 py-4 font-display text-xl font-black text-chalk hover:shadow-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
 						disabled={submitting || !emailMatch}
 					>
-						{submitting ? 'Submitting...' : 'Submit Reservation Request'}
+						{submitting ? 'Submitting...' : success ? 'Request Sent ✓' : 'Submit Reservation Request'}
 					</button>
 
 					{#if success}
-						<p class="mt-6 text-chalk text-lg font-medium">
+						<p role="status" class="mx-auto mt-6 max-w-xl rounded-xl border border-green-500 bg-green-700 px-6 py-4 text-lg font-medium text-chalk">
 							Reservation request sent successfully! We'll get back to you within 24 hours.
 						</p>
 					{:else if error}
