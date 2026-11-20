@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { asText, type Content } from '@prismicio/client';
 	import { SliceZone } from '@prismicio/svelte';
-	import { page } from '$app/stores';
 
 	import { components } from '$lib/slices';
 	import MenuNav from '$lib/components/MenuNav.svelte';
@@ -23,23 +22,11 @@
 		.filter((s) => s.label);
 </script>
 
-<svelte:head>
-	<title>{$page.data.title}</title>
-	{#if $page.data.meta_description}
-		<meta name="description" content={$page.data.meta_description} />
-	{/if}
-	{#if $page.data.meta_title}
-		<meta name="og:title" content={$page.data.meta_title} />
-	{/if}
-	{#if $page.data.meta_image}
-		<meta name="og:image" content={$page.data.meta_image.url} />
-		<meta name="twitter:card" content="summary_large_image" />
-	{/if}
-</svelte:head>
-
 {#if sections.length > 0}
 	<MenuNav {sections} />
 	<div class="pt-14"></div>
 {/if}
+
+<h1 class="mx-auto max-w-6xl px-6 pt-8 font-display text-4xl font-bold text-chalk">Drinks Menu</h1>
 
 <SliceZone slices={data.page.data.slices} {components} />

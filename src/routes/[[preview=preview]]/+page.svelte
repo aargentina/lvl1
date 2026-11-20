@@ -13,7 +13,7 @@
 		{
 			img: '/redesign/ev-trivia.jpg',
 			href: '/team-trivia-challenge',
-			title: 'Geek Trivia',
+			title: 'Team Trivia Challenge',
 			body: 'Team based trivia with point tracking. Solo participants welcome.'
 		},
 		{
@@ -95,7 +95,7 @@
 			<h1
 				class="font-display text-xl font-black tracking-[0.05em] text-chalk sm:text-2xl lg:text-4xl"
 			>
-				Pub <span class="text-red">•</span> Kitchen <span class="text-red">•</span> Games
+				Level One Game Pub <span class="text-red">•</span> Board Games in Ottawa
 			</h1>
 			<div class="mt-4 flex flex-wrap gap-3 lg:mt-6 lg:gap-4">
 				<a
@@ -225,7 +225,7 @@
 				That doesn't even include all of our cool video games and stuff.
 			</p>
 			<a
-				href="/board_games"
+				href="/board-games"
 				class="mt-6 inline-block font-body font-black text-red-bright underline"
 			>
 				Browse our Library →

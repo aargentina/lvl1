@@ -3,7 +3,8 @@
 
 	import { PrismicPreview } from '@prismicio/svelte/kit';
 	import { page } from '$app/stores';
-	import { repositoryName, createClient } from '$lib/prismicio';
+	import { hours, siteUrl } from '$lib/pub';
+	import { repositoryName } from '$lib/prismicio';
 	import Header from '$lib/components/Header.svelte';
 	import Footer from '$lib/components/Footer.svelte';
 	import { dev } from '$app/environment';
@@ -13,9 +14,9 @@
 
 	let { children } = $props();
 
-	const client = createClient();
-
-	const siteUrl = 'https://levelonegamepub.com';
+	const pageTitle = $derived(
+		$page.data.meta_title?.trim() || $page.data.title?.trim() || 'Level One Game Pub'
+	);
 
 	const localBusinessSchema = {
 		'@context': 'https://schema.org',
@@ -27,22 +28,30 @@
 		email: 'info@levelonegamepub.com',
 		image: `${siteUrl}/icon.png`,
 		sameAs: [
-			'https://www.facebook.com/LevelOneOttawa',
+			'https://www.facebook.com/LevelOneGamePub',
 			'https://www.instagram.com/levelonegamepub/',
 			'https://www.youtube.com/@leveloneandtheloft321'
 		],
 		address: {
 			'@type': 'PostalAddress',
+			streetAddress: '14 Waller St',
+			postalCode: 'K1N 9C4',
 			addressLocality: 'Ottawa',
 			addressRegion: 'ON',
 			addressCountry: 'CA'
 		},
+		openingHoursSpecification: hours.map(({ days, opens, closes }) => ({
+			'@type': 'OpeningHoursSpecification',
+			dayOfWeek: days,
+			opens,
+			closes
+		})),
 		description: 'Board game pub and gaming community in Ottawa, Ontario.'
 	};
 </script>
 
 <svelte:head>
-	<title>{$page.data.title}</title>
+	<title>{pageTitle}</title>
 	<link rel="canonical" href="{siteUrl}{$page.url.pathname}" />
 
 	{#if $page.data.meta_description}
@@ -52,9 +61,7 @@
 	<!-- Open Graph -->
 	<meta property="og:type" content="website" />
 	<meta property="og:url" content="{siteUrl}{$page.url.pathname}" />
-	{#if $page.data.meta_title}
-		<meta property="og:title" content={$page.data.meta_title} />
-	{/if}
+	<meta property="og:title" content={pageTitle} />
 	{#if $page.data.meta_description}
 		<meta property="og:description" content={$page.data.meta_description} />
 	{/if}
@@ -64,9 +71,7 @@
 
 	<!-- Twitter Card -->
 	<meta name="twitter:card" content="summary_large_image" />
-	{#if $page.data.meta_title}
-		<meta name="twitter:title" content={$page.data.meta_title} />
-	{/if}
+	<meta name="twitter:title" content={pageTitle} />
 	{#if $page.data.meta_description}
 		<meta name="twitter:description" content={$page.data.meta_description} />
 	{/if}

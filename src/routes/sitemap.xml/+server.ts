@@ -1,3 +1,4 @@
+import { siteUrl } from '$lib/pub';
 import { createClient } from '$lib/prismicio';
 import type { RequestHandler } from '@sveltejs/kit';
 import { predicate } from '@prismicio/client';
@@ -10,14 +11,11 @@ export const GET: RequestHandler = async () => {
 			predicates: [predicate.at('document.type', 'page')]
 		});
 
-		// Base URL of your site
-		const baseUrl = 'https://levelonegamepub.com';
-
 		// Build XML with enhanced metadata
 		const urls = documents
 			.filter((doc) => doc.uid) // Ensure document has a UID
 			.map((doc) => {
-				const path = doc.uid === 'home' ? '' : `/${doc.uid}`;
+				const path = doc.uid === 'home' ? '/' : `/${doc.uid}`;
 				const lastmod = doc.last_publication_date 
 					? new Date(doc.last_publication_date).toISOString()
 					: new Date().toISOString();
@@ -28,7 +26,7 @@ export const GET: RequestHandler = async () => {
 				
 				return `
       <url>
-        <loc>${baseUrl}${path}</loc>
+        <loc>${siteUrl}${path}</loc>
         <lastmod>${lastmod}</lastmod>
         <changefreq>${changefreq}</changefreq>
         <priority>${priority}</priority>
