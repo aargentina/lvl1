@@ -85,11 +85,48 @@ test('native form posts without a browser retry ID still send valid mail', async
 		const first = prepareFormMail(data(fields));
 		const second = prepareFormMail(data(fields));
 		assert.notEqual(first.idempotencyKey, second.idempotencyKey);
+		if (!fields.organizerName) assert.notEqual(first.mail.subject, second.mail.subject);
 		const before = sends.length;
 		const response = await handleFormEmail(request(fields), url, send);
 		assert.equal(response.status, 200);
 		assert.equal(sends.length, before + 1);
 	}
+});
+
+test('separate contact submissions have separate subjects, with stable exact retries', () => {
+	const fields = contact();
+	const first = prepareFormMail(data(fields));
+	const retry = prepareFormMail(data({ ...fields }));
+	assert.match(first.mail.subject, /^New Contact Form Submission: Élodie 王 \[[a-f0-9]{32}\]$/u);
+	assert.deepEqual(retry, first);
+	for (const changes of [
+		{ submissionId: randomUUID() },
+		{ name: 'Another visitor' },
+		{ email: 'another@example.com' },
+		{ message: 'A separate question after an uncertain send.' }
+	]) {
+		const next = prepareFormMail(data({ ...fields, ...changes }));
+		assert.notEqual(next.mail.subject, first.mail.subject);
+		assert.notEqual(next.idempotencyKey, first.idempotencyKey);
+	}
+	const optedIn = prepareFormMail(data({ ...fields, emailOffers: 'on' }));
+	assert.equal(optedIn.mail.subject, first.mail.subject);
+	assert.equal(optedIn.idempotencyKey, first.idempotencyKey);
+});
+
+test('contact subjects accept long names and reject header controls; group subjects stay as before', () => {
+	const longName = '王'.repeat(120);
+	assert.ok(
+		prepareFormMail(data({ ...contact(), name: longName })).mail.subject.includes(longName)
+	);
+	assert.throws(
+		() => prepareFormMail(data({ ...contact(), name: 'Visitor\r\nBcc: other@example.com' })),
+		FormInputError
+	);
+	assert.equal(
+		prepareFormMail(data(group())).mail.subject,
+		'Large Group Request: Sat, Dec 12, 2026 · 25 people · Élodie 王'
+	);
 });
 
 test('every existing time, game and payment option is accepted', () => {

@@ -5,6 +5,31 @@ Each accepted form sends one message from `send@levelonegamepub.com` to
 `levelonereservations@gmail.com`. The customer address is the `Reply-To`
 address. The route sends no confirmation to the customer.
 
+## Contact Us email subjects
+
+Contact Us previously used the same subject for every submission:
+`New Contact Form Submission`. Gmail can group automated mail with the
+same subject and mail participants into one conversation.
+
+The local repair adds the checked customer name and a request reference:
+`New Contact Form Submission: Alex Example [request reference]`.
+The reference uses the submission ID and the checked name, email and
+message. Each new submission or changed message gets a new reference.
+An exact retry keeps the same subject and provider retry key. The news
+and offers checkbox does not change the reference.
+
+Keep the current Large Group subject, fixed sender, staff recipient and
+customer Reply-To. No Gmail setting change is part of this repair.
+This affects new mail after release; it does not change old inbox mail.
+
+Local helper and real-SDK tests can check the outgoing subjects and retry
+keys. After a checked release, send two clearly marked Contact Us tests
+with the same synthetic customer and different submission IDs. Confirm
+both deliveries and separate Gmail thread IDs. Local tests alone do not
+prove the received Gmail display.
+
+Source: [Gmail conversation grouping](https://support.google.com/mail/answer/5900?hl=en).
+
 ## Input checks
 
 - The request must come from the same origin as the form page. A missing
