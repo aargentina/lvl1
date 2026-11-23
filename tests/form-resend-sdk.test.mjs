@@ -50,9 +50,14 @@ test('the installed SDK sends Reply-To and the retry header through the real rou
 			hp_7c2: '',
 			submissionId: '62f752e8-453d-47be-91bf-52f8464e9a6a'
 		};
-		for (let index = 0; index < 2; index++) {
+		for (const submissionId of [
+			fields.submissionId,
+			fields.submissionId,
+			'62f752e8-453d-47be-91bf-52f8464e9a6b'
+		]) {
 			const form = new FormData();
 			for (const [key, value] of Object.entries(fields)) form.set(key, value);
+			form.set('submissionId', submissionId);
 			const request = new Request(url, {
 				method: 'POST',
 				headers: { origin: url.origin },
@@ -61,12 +66,22 @@ test('the installed SDK sends Reply-To and the retry header through the real rou
 			const response = await POST({ request, url });
 			assert.equal(response.status, 200);
 		}
-		assert.equal(calls.length, 2);
+		assert.equal(calls.length, 3);
 		assert.equal(calls[0].body.reply_to, 'visitor@example.com');
 		assert.deepEqual(calls[0].body.to, ['levelonereservations@gmail.com']);
 		assert.equal(calls[0].body.from, 'send@levelonegamepub.com');
+		assert.match(
+			calls[0].body.subject,
+			/^New Contact Form Submission: Synthetic Visitor \[[a-f0-9]{32}\]$/
+		);
+		assert.equal(calls[0].body.subject, calls[1].body.subject);
+		assert.notEqual(calls[0].body.subject, calls[2].body.subject);
 		assert.match(calls[0].headers.get('idempotency-key'), /^website-form\//);
 		assert.equal(calls[0].headers.get('idempotency-key'), calls[1].headers.get('idempotency-key'));
+		assert.notEqual(
+			calls[0].headers.get('idempotency-key'),
+			calls[2].headers.get('idempotency-key')
+		);
 	} finally {
 		globalThis.fetch = originalFetch;
 	}

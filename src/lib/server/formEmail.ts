@@ -225,7 +225,12 @@ export function prepareFormMail(
 		const name = field(form, 'name', 'name', 120);
 		offersName = name;
 		const message = field(form, 'message', 'message', FORM_TEXT_LIMIT, false, true);
-		subject = 'New Contact Form Submission';
+		// Separate new requests in Gmail, while keeping exact retries unchanged.
+		const reference = createHash('sha256')
+			.update(JSON.stringify([submissionId, name, email, message]))
+			.digest('hex')
+			.slice(0, 32);
+		subject = `New Contact Form Submission: ${name} [${reference}]`;
 		html = `<h1>New Contact Form Submission</h1><p><strong>Name:</strong> ${escapeHtml(name)}</p><p><strong>Email:</strong> ${escapeHtml(email)}</p><p style="white-space: pre-wrap"><strong>Message:</strong> ${escapeHtml(message)}</p>`;
 	}
 	const mail = {
