@@ -69,6 +69,7 @@ function page(fetchImpl) {
 	const document = { visibilityState: 'visible' };
 	const context = vm.createContext({
 		$state: (value) => value,
+		$derived: (value) => value,
 		$props: () => ({ data: { page: { data: { slices: [] } } } }),
 		onMount: (run) => {
 			cleanup = run();

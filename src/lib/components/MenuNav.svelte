@@ -1,12 +1,12 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import { onMount, untrack } from 'svelte';
 
 	interface Props {
 		sections: { label: string; id: string }[];
 	}
 
 	let { sections }: Props = $props();
-	let activeId = $state(sections[0]?.id ?? '');
+	let activeId = $state(untrack(() => sections[0]?.id ?? ''));
 	let navEl: HTMLElement | undefined = $state();
 	let scrollContainer: HTMLElement | undefined = $state();
 	let headerHeight = $state(0);

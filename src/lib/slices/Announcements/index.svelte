@@ -7,7 +7,7 @@
 	}
 
 	const { slice }: Props = $props();
-	const cards = slice.primary.cards;
+	const cards = $derived(slice.primary.cards);
 
 	let track: HTMLDivElement | undefined = $state();
 	let cardEls: HTMLElement[] = $state([]);
