@@ -90,6 +90,9 @@
 					></span
 				>
 			</label>
+			<p class="mt-1 text-xs opacity-70">
+				How we use your details: <a href="/legal#privacy" class="underline">Privacy policy</a>
+			</p>
 
 			<label class="label py-2">
 				<span>Comment</span>

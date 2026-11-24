@@ -184,6 +184,9 @@
 							></span
 						>
 					</label>
+					<p class="mt-1 text-xs opacity-70">
+						How we use your details: <a href="/legal#privacy" class="underline">Privacy policy</a>
+					</p>
 
 					<!-- Organization Name (Optional) -->
 					<label class="label py-2">

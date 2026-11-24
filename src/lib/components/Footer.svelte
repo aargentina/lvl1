@@ -89,6 +89,8 @@
 				</a>
 			</div>
 			<p class="font-body text-sm text-chalk/50">
+				<a href="/legal" class="underline hover:text-red-bright">Privacy and terms</a>
+				<span aria-hidden="true">·</span>
 				© {new Date().getFullYear()} Level One. All rights reserved.
 			</p>
 		</div>
