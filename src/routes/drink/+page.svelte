@@ -8,19 +8,23 @@
 
 	let { data } = $props();
 
-	const menuSlices = data.page.data.slices.filter(
-		(s) => s.slice_type === 'image_cards'
-	) as Content.ImageCardsSlice[];
+	const menuSlices = $derived(
+		data.page.data.slices.filter(
+			(s) => s.slice_type === 'image_cards'
+		) as Content.ImageCardsSlice[]
+	);
 
-	const sections = menuSlices
-		.map((slice) => {
-			const label = asText(slice.primary.heading);
-			return {
-				label,
-				id: label.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
-			};
-		})
-		.filter((s) => s.label);
+	const sections = $derived(
+		menuSlices
+			.map((slice) => {
+				const label = asText(slice.primary.heading);
+				return {
+					label,
+					id: label.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
+				};
+			})
+			.filter((s) => s.label)
+	);
 </script>
 
 <svelte:head>
