@@ -43,12 +43,14 @@
 		slice.primary.cards.filter((card) => card.hidden !== true && !isPlaceholder(card))
 	);
 
-	const sectionId = isFilled.richText(slice.primary.heading)
-		? asText(slice.primary.heading)
-				.toLowerCase()
-				.replace(/[^a-z0-9]+/g, '-')
-				.replace(/(^-|-$)/g, '')
-		: undefined;
+	const sectionId = $derived(
+		isFilled.richText(slice.primary.heading)
+			? asText(slice.primary.heading)
+					.toLowerCase()
+					.replace(/[^a-z0-9]+/g, '-')
+					.replace(/(^-|-$)/g, '')
+			: undefined
+	);
 </script>
 
 <div class="bg-ink-noise relative grid scroll-mt-40 gap-12 p-4" id={sectionId}>

@@ -7,7 +7,9 @@
 		node.playbackRate = 0.9;
 	}
 
-	const announcementsSlice = data.page.data.slices.find((s) => s.slice_type === 'announcements');
+	const announcementsSlice = $derived(
+		data.page.data.slices.find((s) => s.slice_type === 'announcements')
+	);
 
 	const events = [
 		{
