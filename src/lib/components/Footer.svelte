@@ -10,7 +10,7 @@
 			<div>
 				<p class="font-heading text-[11px] uppercase tracking-[0.18em] text-red-bright">Address</p>
 				<p class="mt-4 font-display text-2xl text-chalk">14 Waller St</p>
-				<p class="mt-2 font-body text-base text-chalk/50">Ottawa, ON&nbsp;&nbsp;K1N 9C4</p>
+				<p class="text-chalk/50 mt-2 font-body text-base">Ottawa, ON&nbsp;&nbsp;K1N 9C4</p>
 				<a
 					href="https://maps.google.com/?q=14+Waller+St+Ottawa+ON"
 					target="_blank"
@@ -25,28 +25,36 @@
 				<p class="font-heading text-[11px] uppercase tracking-[0.18em] text-red-bright">Hours</p>
 				<dl class="mt-4">
 					{#each hours as h}
-						<div class="flex justify-between border-t border-chalk/10 py-2.5">
-							<dt class="font-body text-[15px] text-chalk/50">{h.day}</dt>
+						<div class="border-chalk/10 flex justify-between border-t py-2.5">
+							<dt class="text-chalk/50 font-body text-[15px]">{h.day}</dt>
 							<dd class="font-body text-[15px] text-chalk">{h.time}</dd>
 						</div>
 					{/each}
-					<div class="border-t border-chalk/10"></div>
+					<div class="border-chalk/10 border-t"></div>
 				</dl>
 			</div>
 			<!-- Contact -->
 			<div>
 				<p class="font-heading text-[11px] uppercase tracking-[0.18em] text-red-bright">Contact</p>
-				<a href="tel:+16139797529" class="mt-4 block font-heading text-3xl tracking-tight text-chalk">
+				<a
+					href="tel:+16139797529"
+					class="mt-4 block font-heading text-3xl tracking-tight text-chalk"
+				>
 					(613) 979-7529
 				</a>
-				<a href="mailto:reservations@levelonegamepub.com" class="mt-2 block font-body text-[15px] text-chalk/50">
+				<a
+					href="mailto:reservations@levelonegamepub.com"
+					class="text-chalk/50 mt-2 block font-body text-[15px]"
+				>
 					reservations@levelonegamepub.com
 				</a>
 			</div>
 		</div>
 
 		<!-- Bottom bar: socials + copyright -->
-		<div class="mt-16 flex flex-col gap-4 border-t border-chalk/10 pt-6 sm:flex-row sm:items-center sm:justify-between">
+		<div
+			class="border-chalk/10 mt-16 flex flex-col gap-4 border-t pt-6 sm:flex-row sm:items-center sm:justify-between"
+		>
 			<div class="flex gap-6">
 				<a
 					href="https://www.facebook.com/LevelOneGamePub"
@@ -88,8 +96,8 @@
 					</svg>
 				</a>
 			</div>
-			<p class="font-body text-sm text-chalk/50">
-				<a href="/legal" class="underline hover:text-red-bright">Privacy and terms</a>
+			<p class="text-chalk/50 font-body text-sm">
+				<a href="/legal" class="underline hover:text-red-bright">Privacy</a>
 				<span aria-hidden="true">·</span>
 				© {new Date().getFullYear()} Level One. All rights reserved.
 			</p>

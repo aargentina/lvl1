@@ -7,26 +7,26 @@ export const LEGAL_CONTACT = 'info@levelonegamepub.com';
 
 export type LegalSection = { id: string; title: string; body: string[] };
 
-export const LEGAL_TITLE = 'Privacy, terms and data deletion';
-export const LEGAL_INTRO = 'Level One Game Pub, 14 Waller St, Ottawa, Ontario K1N 9C4.';
-
+export const LEGAL_TITLE = 'Privacy and data deletion';
 export const LEGAL_SECTIONS: LegalSection[] = [
 	{
 		id: 'privacy',
 		title: 'Privacy',
 		body: [
-			'We use contact details, messages, orders and bookings to answer requests, arrange visits and run the pub. With your consent, we also use your email for news and offers.',
-			'We use player contact details, availability, groups and attendance to arrange games. Dungeon Masters can see their players’ names and attendance.',
-			'Our staff tools read our Facebook Page and Instagram posts, account details and activity totals, our Google Search Console data, public reviews and reviewer names, and our email inboxes. We use these records for reports, planning and guest service. Staff must sign in to these tools, and each person sees only what their role needs.',
-			'Service providers host our services, store records and send email. They may process information outside Canada, where local authorities may require access.',
-			'We keep personal information only as long as needed for these purposes or required by law.',
-			'Our use and transfer of Google API data follows the Google API Services User Data Policy (https://developers.google.com/terms/api-services-user-data-policy), including its Limited Use requirements.'
+			'Level One Game Pub uses contact details, messages, orders and bookings to answer requests and run the pub. We email news and offers with your consent. Use the unsubscribe link to stop them.',
+			'Our staff tools read our Facebook Page and Instagram posts, account details and activity totals. They also read Google Search Console data, public reviews and reviewer names, and our email inboxes. We use these records for reports, planning and guest service.',
+			'Service providers store these records and send email for us. They may process information outside Canada, where local authorities may require access.',
+			'Staff access requires sign-in and is limited by role. We keep information only as long as needed for these purposes or required by law.',
+			'Our use and transfer of Google API data follow the Google API Services User Data Policy (https://developers.google.com/terms/api-services-user-data-policy), including its Limited Use requirements.'
 		]
 	},
 	{
-		id: 'terms',
-		title: 'Terms',
-		body: ['Use our staff tools only with Level One’s approval and for Level One business.']
+		id: 'other-policies',
+		title: 'Applicants, employees and players',
+		body: [
+			'Applicant and employee privacy and text message terms: https://apply.levelonegamepub.com/legal',
+			'D&D player privacy: https://players.levelonegamepub.com/legal'
+		]
 	},
 	{
 		id: 'data-deletion',

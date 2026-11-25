@@ -1,11 +1,10 @@
 <script lang="ts">
-	import { LEGAL_INTRO, LEGAL_SECTIONS, LEGAL_TITLE, linkParts } from '$lib/legal';
+	import { LEGAL_SECTIONS, LEGAL_TITLE, linkParts } from '$lib/legal';
 </script>
 
 <article class="bg-ink-noise px-5 py-12 font-body text-chalk">
 	<div class="mx-auto max-w-3xl">
 		<h1 class="font-display text-4xl font-bold">{LEGAL_TITLE}</h1>
-		<p class="mt-6 leading-relaxed">{LEGAL_INTRO}</p>
 
 		{#each LEGAL_SECTIONS as section (section.id)}
 			<section id={section.id} class="mt-8 scroll-mt-24">

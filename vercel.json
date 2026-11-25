@@ -1,5 +1,5 @@
 {
-  "redirects": [
+	"redirects": [
 		{
 			"source": "/legal/privacy",
 			"destination": "/legal#privacy",
@@ -7,7 +7,7 @@
 		},
 		{
 			"source": "/legal/terms",
-			"destination": "/legal#terms",
+			"destination": "/legal",
 			"permanent": false
 		},
 		{
@@ -61,4 +61,4 @@
 			"permanent": true
 		}
 	]
-} 
+}
