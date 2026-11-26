@@ -26,3 +26,12 @@ test('sitemap keeps normal pages and drops redirected copies', () => {
 	assert.equal(isSitemapPage(''), false);
 	assert.equal(isSitemapPage(null), false);
 });
+
+test('old addresses from Search Console redirect to current pages', () => {
+	const expected = { '/menus': '/select', '/contact-us': '/contact', '/how-it-': '/hiw' };
+	for (const [source, destination] of Object.entries(expected)) {
+		const rule = vercel.redirects.find((r) => r.source === source);
+		assert.equal(rule?.destination, destination, `${source} redirects to ${destination}`);
+		assert.equal(rule?.permanent, true);
+	}
+});

@@ -6,6 +6,21 @@
 			"permanent": true
 		},
 		{
+			"source": "/menus",
+			"destination": "/select",
+			"permanent": true
+		},
+		{
+			"source": "/contact-us",
+			"destination": "/contact",
+			"permanent": true
+		},
+		{
+			"source": "/how-it-",
+			"destination": "/hiw",
+			"permanent": true
+		},
+		{
 			"source": "/menu/food",
 			"destination": "/food",
 			"permanent": true
