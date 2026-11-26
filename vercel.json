@@ -1,5 +1,10 @@
 {
-  "redirects": [
+	"redirects": [
+		{
+			"source": "/qr",
+			"destination": "/qrmenu",
+			"permanent": true
+		},
 		{
 			"source": "/menu/food",
 			"destination": "/food",
@@ -46,4 +51,4 @@
 			"permanent": true
 		}
 	]
-} 
+}
